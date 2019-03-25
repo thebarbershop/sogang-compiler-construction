@@ -1,49 +1,20 @@
-#
-# Makefile for TINY
-# Gnu C Version
-# K. Louden 2/3/98
-#
-
 CC = gcc
 
-CFLAGS = 
+CFLAGS = -Wall -O3
 
-OBJS = main.o util.o scan.o parse.o symtab.o analyze.o code.o cgen.o
+.SUFFIXES: .c .o
 
-tiny: $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -o tiny
+LEXCODE=cmin.l
+LEXSRC=lex.yy.c
 
-main.o: main.c globals.h util.h scan.h parse.h analyze.h cgen.h
-	$(CC) $(CFLAGS) -c main.c
+SRCS=main.c util.c lex.yy.c
+OBJS=$(SRCS:.c=.o)
 
-util.o: util.c util.h globals.h
-	$(CC) $(CFLAGS) -c util.c
+20120085: lex.yy.c $(OBJS)
+	$(CC) -o $@ $(OBJS)
 
-scan.o: scan.c scan.h util.h globals.h
-	$(CC) $(CFLAGS) -c scan.c
-
-parse.o: parse.c parse.h scan.h globals.h util.h
-	$(CC) $(CFLAGS) -c parse.c
-
-symtab.o: symtab.c symtab.h
-	$(CC) $(CFLAGS) -c symtab.c
-
-analyze.o: analyze.c globals.h symtab.h analyze.h
-	$(CC) $(CFLAGS) -c analyze.c
-
-code.o: code.c code.h globals.h
-	$(CC) $(CFLAGS) -c code.c
-
-cgen.o: cgen.c globals.h symtab.h code.h cgen.h
-	$(CC) $(CFLAGS) -c cgen.c
+lex.yy.c: cmin.l
+	flex cmin.l
 
 clean:
-	-rm tiny
-	-rm tm
-	-rm $(OBJS)
-
-tm: tm.c
-	$(CC) $(CFLAGS) tm.c -o tm
-
-all: tiny tm
-
+	rm -f $(OBJS) 20120085 lex.yy.c
