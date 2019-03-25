@@ -20,3 +20,4 @@ int main(){
     res = binarySearch(goal);
     return 0;
 }
+
