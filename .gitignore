@@ -1,5 +1,6 @@
 .*
 !.gitignore
+!.gitattributes
 *.o
 20120085
 lex.yy.c
