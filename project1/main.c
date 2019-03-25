@@ -48,6 +48,7 @@ int Error = FALSE;
 
 int main(int argc, char *argv[])
 {
+  int i;
   #if !NO_PARSE
   TreeNode *syntaxTree;
   #endif
@@ -67,7 +68,11 @@ int main(int argc, char *argv[])
     exit(1);
   }
   listing = stdout; /* send listing to screen */
-  fprintf(listing, "\nTINY COMPILATION: %s\n", pgm);
+  fprintf(listing, "\tline number\ttoken\t\tlexeme\n");
+  for(i = 0; i < 54; i++) {
+    fputc('-', listing);
+  }
+  fputc('\n', listing);
 #if NO_PARSE
   while (getToken() != ENDFILE)
     ;

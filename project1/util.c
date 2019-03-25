@@ -19,7 +19,7 @@ void printToken(TokenType token, const char *tokenString)
   {
   /* book-keeping tokens */
   case ENDFILE:
-    fprintf(listing, "EOF\n");
+    fprintf(listing, "\t\tEOF\n");
     break;
   case ERROR:
     fprintf(listing,
@@ -33,77 +33,44 @@ void printToken(TokenType token, const char *tokenString)
   case RETURN:
   case VOID:
   case WHILE:
-    fprintf(listing,
-            "reserved word: %s\n", tokenString);
-    break;
-
+    {
+      int i;
+      fprintf(listing, "\t\t");
+      for (i = 0; tokenString[i]; i++) {
+        fputc(tokenString[i]-0x20, listing);
+      }
+      fprintf(listing, "\t\t%s\n", tokenString);
+      break;
+    }
   /* special symbols */
   case PLUS:
-    fprintf(listing, "+\n");
-    break;
   case MINUS:
-    fprintf(listing, "-\n");
-    break;
   case TIMES:
-    fprintf(listing, "*\n");
-    break;
   case OVER:
-    fprintf(listing, "/\n");
-    break;
   case LT:
-    fprintf(listing, "<\n");
-    break;
   case LTE:
-    fprintf(listing, "<=\n");
-    break;
   case GT:
-    fprintf(listing, ">\n");
-    break;
   case GTE:
-    fprintf(listing, ">=\n");
-    break;
   case EQ:
-    fprintf(listing, "=\n");
-    break;
   case NEQ:
-    fprintf(listing, "!=\n");
-    break;
   case ASSIGN:
-    fprintf(listing, "=\n");
-    break;
   case SEMI:
-    fprintf(listing, ";\n");
-    break;
   case COMMA:
-    fprintf(listing, ",\n");
-    break;
   case LPAREN:
-    fprintf(listing, "(\n");
-    break;
   case RPAREN:
-    fprintf(listing, ")\n");
-    break;
   case LBRACKET:
-    fprintf(listing, "[\n");
-    break;
   case RBRACKET:
-    fprintf(listing, "]\n");
-    break;
   case LBRACE:
-    fprintf(listing, "{\n");
-    break;
   case RBRACE:
-    fprintf(listing, "}\n");
+    fprintf(listing, "\t\t%s\t\t%s\n", tokenString, tokenString);
     break;
 
   /* multicharacter tokens */
   case NUM:
-    fprintf(listing,
-            "NUM, val= %s\n", tokenString);
+    fprintf(listing, "\t\tNUM\t\t%s\n", tokenString);
     break;
   case ID:
-    fprintf(listing,
-            "ID, name= %s\n", tokenString);
+    fprintf(listing, "\t\tID\t\t%s\n", tokenString);
     break;
   default: /* should never happen */
     fprintf(listing, "Unknown token: %d\n", token);
