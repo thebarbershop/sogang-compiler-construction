@@ -8,6 +8,9 @@
 /****************************************************/
 
 %option yylineno
+%option noyywrap
+%option noinput
+%option nounput
 %{
 #include "globals.h"
 #include "util.h"
@@ -27,8 +30,6 @@ whitespace  [ \t]+
 
 %%
 
-/* Keywords
-   Matching order of Louden, 1997, page 491 */
 "else"          {return ELSE;}
 "if"            {return IF;}
 "int"           {return INT;}
@@ -36,8 +37,6 @@ whitespace  [ \t]+
 "void"          {return VOID;}
 "while"         {return WHILE;}
 
-/* Special symbols
-   Matching order of Louden, 1997, page 491 */
 "+"             {return PLUS;}
 "-"             {return MINUS;}
 "*"             {return TIMES;}
@@ -61,20 +60,13 @@ whitespace  [ \t]+
 
 {number}        {return NUM;}
 {identifier}    {return ID;}
-/*{newline}       {lineno++;}*/
+{newline}       {/* yylineno increments */}
 {whitespace}    {/* skip whitespace */}
 
-/* To handle C Comments, use start conditions
-   described in the official FLEX manual at:
-   http://westes.github.io/flex/manual/Start-Conditions.html */
-
-/* Valid comments */
 "/*"            {BEGIN(COMMENT);}
 <COMMENT>.      { /* eat up comment body */ }
 <COMMENT>"*/"   {BEGIN(INITIAL);}
 
-/* End of file before comment ends */
-/* <COMMENT><<EOF>>{return ERROR;} */
 
 %%
 
