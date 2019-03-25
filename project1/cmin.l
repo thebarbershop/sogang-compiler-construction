@@ -64,7 +64,12 @@ whitespace  [ \t]+
 {whitespace}    {/* skip whitespace */}
 
 "/*"            {BEGIN(COMMENT);}
-<COMMENT>.      { /* eat up comment body */ }
+<COMMENT>.      {/* eat up comment body */}
+<COMMENT>{newline} {/* yylineno increments */}
+<COMMENT><<EOF>> {
+                    BEGIN(INITIAL);
+                    strncpy(yytext,"Comment Error", MAXTOKENLEN);
+                    return ERROR; }
 <COMMENT>"*/"   {BEGIN(INITIAL);}
 
 

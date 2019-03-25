@@ -23,7 +23,7 @@ void printToken(TokenType token, const char *tokenString)
     break;
   case ERROR:
     fprintf(listing,
-            "ERROR: %s\n", tokenString);
+            "\t\tERROR\t\t%s\n", tokenString);
     break;
 
   /* reserved words */
