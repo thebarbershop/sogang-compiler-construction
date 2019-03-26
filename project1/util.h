@@ -34,15 +34,4 @@ char *copyString(char *);
  */
 void printTree(TreeNode *);
 
-/* The following lines are copied from scan.h */
-
-/* function getToken returns the 
- * next token in source file
- */
-#define MAXTOKENLEN 40
-
-/* tokenString array stores the lexeme of each token */
-extern char tokenString[MAXTOKENLEN + 1];
-TokenType getToken(void);
-
 #endif
