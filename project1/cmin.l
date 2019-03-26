@@ -8,9 +8,7 @@
 /****************************************************/
 
 %option yylineno
-%option noyywrap
-%option noinput
-%option nounput
+%option noyywrap noinput nounput
 %{
 #include "globals.h"
 #include "util.h"
