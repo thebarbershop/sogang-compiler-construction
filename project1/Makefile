@@ -4,9 +4,6 @@ CFLAGS = -Wall -O3
 
 .SUFFIXES: .c .o
 
-LEXCODE=cmin.l
-LEXSRC=lex.yy.c
-
 SRCS=main.c util.c lex.yy.c
 OBJS=$(SRCS:.c=.o)
 
