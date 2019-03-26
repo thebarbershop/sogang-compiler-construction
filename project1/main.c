@@ -18,7 +18,6 @@
  */
 #define NO_CODE TRUE
 
-#include "util.h"
 #if NO_PARSE
 #else
 #include "parse.h"
