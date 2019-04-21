@@ -9,6 +9,7 @@
 
 %option yylineno
 %option noyywrap noinput nounput
+%option never-interactive
 %{
 #include "globals.h"
 #include "util.h"

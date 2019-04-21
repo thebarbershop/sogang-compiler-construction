@@ -7,9 +7,10 @@
 /****************************************************/
 
 #include "globals.h"
+#include "util.h"
 
 /* set NO_PARSE to TRUE to get a scanner-only compiler */
-#define NO_PARSE TRUE
+#define NO_PARSE FALSE
 /* set NO_ANALYZE to TRUE to get a parser-only compiler */
 #define NO_ANALYZE TRUE
 
@@ -58,7 +59,7 @@ int main(int argc, char *argv[])
   }
   strcpy(pgm, argv[1]);
   if (strchr(pgm, '.') == NULL)
-    strcat(pgm, ".tny");
+    strcat(pgm, ".c");
   source = fopen(pgm, "r");
   if (source == NULL)
   {

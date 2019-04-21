@@ -120,6 +120,47 @@ TreeNode *newExpNode(ExpKind kind)
   return t;
 }
 
+/* Function newDeclNode creates a new declaration
+ * node for syntax tree construction
+ */
+TreeNode *newDeclNode(DeclKind kind)
+{
+  TreeNode *t = (TreeNode *)malloc(sizeof(TreeNode));
+  int i;
+  if (t == NULL)
+    fprintf(listing, "Out of memory error at line %d\n", lineno);
+  else
+  {
+    for (i = 0; i < MAXCHILDREN; i++)
+      t->child[i] = NULL;
+    t->sibling = NULL;
+    t->nodekind = DeclK;
+    t->kind.decl = kind;
+    t->lineno = lineno;
+  }
+  return t;
+}
+
+TreeNode *newTypeNode(TypeKind kind)
+{
+  TreeNode *t = (TreeNode *)malloc(sizeof(TreeNode));
+  int i;
+  if (t == NULL)
+    fprintf(listing, "Out of memory error at line %d\n", lineno);
+  else
+  {
+    for (i = 0; i < MAXCHILDREN; i++)
+      t->child[i] = NULL;
+    t->sibling = NULL;
+    t->nodekind = TypeK;
+    t->kind.type = kind;
+    t->lineno = lineno;
+  }
+  return t;
+}
+
+
+
 /* Function copyString allocates and makes a new
  * copy of an existing string
  */
@@ -129,8 +170,8 @@ char *copyString(char *s)
   char *t;
   if (s == NULL)
     return NULL;
-  n = strlen(s) + 1;
-  t = malloc(n);
+  n = (int)strlen(s) + 1;
+  t = malloc((size_t)n);
   if (t == NULL)
     fprintf(listing, "Out of memory error at line %d\n", lineno);
   else
@@ -169,23 +210,20 @@ void printTree(TreeNode *tree)
     {
       switch (tree->kind.stmt)
       {
-      case IfK:
-        fprintf(listing, "If\n");
+      case CompoundK:
+        fprintf(listing, "Compound Statement\n");
         break;
-      case RepeatK:
-        fprintf(listing, "Repeat\n");
+      case SelectionK:
+        fprintf(listing, "Selection Statement\n");
         break;
-      case AssignK:
-        fprintf(listing, "Assign to: %s\n", tree->attr.name);
+      case IterationK:
+        fprintf(listing, "Iteration Statement\n");
         break;
-      case ReadK:
-        fprintf(listing, "Read: %s\n", tree->attr.name);
-        break;
-      case WriteK:
-        fprintf(listing, "Write\n");
+      case ReturnK:
+        fprintf(listing, "Return Statement\n");
         break;
       default:
-        fprintf(listing, "Unknown ExpNode kind\n");
+        fprintf(listing, "Unknown StmtNode kind\n");
         break;
       }
     }
@@ -193,6 +231,9 @@ void printTree(TreeNode *tree)
     {
       switch (tree->kind.exp)
       {
+      case AssignK:
+        fprintf(listing, "Assign Expression\n");
+        break;
       case OpK:
         fprintf(listing, "Op: ");
         printToken(tree->attr.op, "\0");
@@ -200,14 +241,58 @@ void printTree(TreeNode *tree)
       case ConstK:
         fprintf(listing, "Const: %d\n", tree->attr.val);
         break;
-      case IdK:
+      case VarK:
         fprintf(listing, "Id: %s\n", tree->attr.name);
         break;
+      case ArrK:
+        fprintf(listing, "Array: %s[%d]\n", tree->attr.arrayattr.name, tree->attr.arrayattr.size);
+        break;
+      case CallK:
+        fprintf(listing, "Calling: %s\n", tree->attr.name);
       default:
         fprintf(listing, "Unknown ExpNode kind\n");
         break;
       }
     }
+    else if (tree->nodekind == DeclK)
+    {
+      switch (tree->kind.decl)
+      {
+      case VarDeclK:
+        fprintf(listing, "Variable Declaration: %s\n", tree->attr.name);
+        break;
+      case ArrDeclK:
+        fprintf(listing, "Array Declaration: %s[%d]\n", tree->attr.arrayattr.name, tree->attr.arrayattr.size);
+        printToken(tree->attr.op, "\0");
+        break;
+      case FunDeclK:
+        fprintf(listing, "Function Declaration: %s\n", tree->attr.name);
+        break;
+      default:
+        fprintf(listing, "Unknown DeclNode kind\n");
+        break;
+      }
+    }
+    else if (tree->nodekind == TypeK)
+    {
+      switch (tree->kind.type)
+      {
+      char *type;
+      case TypeGeneralK:
+        if(tree->type == (ExpType)INT) {
+          type = "INT";
+        }
+        else {
+          type = "VOID";
+        }
+        fprintf(listing, "Type: %s\n", type);
+        break;
+      default:
+        fprintf(listing, "Unknown TypeNode kind\n");
+        break;
+      }
+    }
+
     else
       fprintf(listing, "Unknown node kind\n");
     for (i = 0; i < MAXCHILDREN; i++)

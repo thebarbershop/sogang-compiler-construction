@@ -89,32 +89,51 @@ TokenType getToken(void);
 typedef enum
 {
    StmtK,
-   ExpK
+   ExpK,
+   DeclK,
+   TypeK
 } NodeKind;
 typedef enum
 {
-   IfK,
-   RepeatK,
-   AssignK,
-   ReadK,
-   WriteK
+   CompoundK,
+   SelectionK,
+   IterationK,
+   ReturnK
 } StmtKind;
 typedef enum
 {
+   AssignK,
    OpK,
    ConstK,
-   IdK
+   VarK,
+   ArrK,
+   CallK,
 } ExpKind;
+typedef enum
+{
+   VarDeclK,
+   ArrDeclK,
+   FunDeclK
+} DeclKind;
+typedef enum
+{
+   TypeGeneralK
+} TypeKind;
 
 /* ExpType is used for type checking */
 typedef enum
 {
    Void,
-   Integer,
-   Boolean
+   Integer
 } ExpType;
 
 #define MAXCHILDREN 3
+
+typedef struct arrayAttr
+{
+   char *name;
+   int size;
+} ArrayAttr;
 
 typedef struct treeNode
 {
@@ -125,11 +144,14 @@ typedef struct treeNode
    union {
       StmtKind stmt;
       ExpKind exp;
+      DeclKind decl;
+      TypeKind type;
    } kind;
    union {
-      TokenType op;
-      int val;
-      char *name;
+      TokenType op;        /* for operator */
+      int val;             /* for constant */
+      char *name;          /* for variable */
+      ArrayAttr arrayattr; /* for array */
    } attr;
    ExpType type; /* for type checking of exps */
 } TreeNode;
