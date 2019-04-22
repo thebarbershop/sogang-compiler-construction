@@ -70,7 +70,7 @@ whitespace  [ \t]+
                     return ERROR; }
 <COMMENT>"*/"   {BEGIN(INITIAL);}
 
-
+<<EOF>>         {return ENDFILE;}
 %%
 
 TokenType getToken(void)

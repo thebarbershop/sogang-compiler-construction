@@ -30,7 +30,7 @@
 /* MAXRESERVED = the number of reserved words */
 #define MAXRESERVED 6
 
-typedef unsigned int TokenType;
+typedef int TokenType;
 
 extern FILE *source;  /* source code text file */
 extern FILE *listing; /* listing output text file */

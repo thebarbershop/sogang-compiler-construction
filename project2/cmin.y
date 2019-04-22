@@ -25,7 +25,7 @@ int yyerror(char * message);
 
 %}
 
-%token ENDFILE ERROR 
+%token ENDFILE ERROR
 /* reserved words */
 %token ELSE IF INT RETURN VOID WHILE
 /* special symbols */
@@ -33,11 +33,11 @@ int yyerror(char * message);
 /* multicharacter tokens */
 %token ID NUM
 
-
 %% /* Grammar for C- */
 
 program             : declaration_list
                         { savedTree = $1;}
+                    ;
 identifier          : ID
                         { savedName = copyString(tokenString); }
                     ;
@@ -72,7 +72,7 @@ var_declaration     : type_specifier identifier SEMI
                             $$->child[0] = $1;
                             $$->attr.name = savedName;
                         }
-                    | type_specifier identifier LBRACKET number RBRACKET
+                    | type_specifier identifier LBRACKET number RBRACKET SEMI
                         {
                             $$ = newDeclNode(ArrDeclK);
                             $$->child[0] = $1;
@@ -144,6 +144,7 @@ compound_stmt       : LBRACE local_declarations statement_list RBRACE
                             $$->child[0] = $2;
                             $$->child[1] = $3;
                         }
+                    ;
 local_declarations  : local_declarations var_declaration
                         {
                             YYSTYPE t = $1;
@@ -363,10 +364,19 @@ int yyerror(char * message)
  * compatible with ealier versions of the TINY scanner
  */
 static int yylex(void)
-{ return getToken(); }
+{ 
+  TokenType token = getToken();
+
+  switch(token) {
+    case ENDFILE:
+      return 0;
+      break;
+    default:
+      return token;
+  }
+}
 
 TreeNode * parse(void)
 { yyparse();
   return savedTree;
 }
-
