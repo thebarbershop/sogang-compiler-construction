@@ -237,11 +237,15 @@ var                 : identifier
                             $$ = newExpNode(VarK);
                             $$->attr.name = savedName;
                         }
-                    | identifier LBRACKET expression RBRACKET
+                    | identifier
                         {
                             $$ = newExpNode(ArrK);
                             $$->attr.name = savedName;
-                            $$->child[0] = $3;
+                        }
+                    LBRACKET expression RBRACKET
+                        {
+                            $$ = $2;
+                            $$->child[0] = $4;
                         }
                     ;
 simple_expression   : additive_expression relop additive_expression
@@ -329,11 +333,15 @@ factor              : LPAREN expression RPAREN { $$ = $2; }
                            $$->attr.val = atoi(tokenString);
                          }
                     ;
-call                : identifier LPAREN args RPAREN
+call                : identifier
                         {
                             $$ = newExpNode(CallK);
                             $$->attr.name = savedName;
-                            $$->child[0] = $3;
+                        }
+                    LPAREN args RPAREN
+                        {
+                            $$ = $2;
+                            $$->child[0] = $4;
                         }
                     ;
 args                : arg_list { $$ = $1; }
