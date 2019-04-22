@@ -31,6 +31,11 @@ TreeNode *newExpNode(ExpKind);
  */
 TreeNode *newDeclNode(DeclKind);
 
+/* Function newTypeNode creates a new type
+ * node for syntax tree construction
+ */
+TreeNode *newTypeNode(TypeKind);
+
 /* Function copyString allocates and makes a new
  * copy of an existing string
  */

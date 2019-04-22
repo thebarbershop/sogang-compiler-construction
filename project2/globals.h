@@ -15,6 +15,10 @@
 #include <ctype.h>
 #include <string.h>
 
+#ifndef YYPARSER
+#include "y.tab.h"
+#endif
+
 #ifndef FALSE
 #define FALSE 0
 #endif

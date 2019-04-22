@@ -4,18 +4,24 @@ CFLAGS=-std=c11 -Wall -Werror -O3 -Wpedantic
 
 .SUFFIXES: .c .o
 
-SRCS=main.c util.c lex.yy.c y.tab.c
+FLEXRAW=cmin.l
+FLEXC=lex.yy.c
+BISONRAW=cmin.y
+BISONC=y.tab.c
+BISONH=y.tab.h
+
+SRCS=main.c util.c $(FLEXC) $(BISONC)
 OBJS=$(SRCS:.c=.o)
 
-20120085: $(OBJS)
+20120085: $(FLEXC) $(BISONC) $(OBJS)
 	$(CC) -o $@ $(OBJS)
 
 lex.yy.c: cmin.l
-	flex -o lex.yy.c cmin.l
+	flex -o $(FLEXC) $(FLEXRAW)
 
 y.tab.c: cmin.y
-	bison -d cmin.y -o y.tab.c
+	bison -o $(BISONC) -d $(BISONRAW)
 
 .PHONY: clean
 clean:
-	rm -f $(OBJS) 20120085 lex.yy.c y.tab.c
+	rm -f $(OBJS) 20120085 $(FLEXC) $(BISONC) $(BISONH)

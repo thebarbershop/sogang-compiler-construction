@@ -15,10 +15,13 @@
 #include "parse.h"
 
 #define YYSTYPE TreeNode *
+
 static char * savedName; /* for use in assignments */
 static int savedNum;      /* ditto */
-static int savedLineNo;  /* ditto */
 static TreeNode * savedTree; /* stores syntax tree for later return */
+
+static int yylex(void);
+int yyerror(char * message);
 
 %}
 
@@ -33,14 +36,14 @@ static TreeNode * savedTree; /* stores syntax tree for later return */
 
 %% /* Grammar for C- */
 
-identifier          : ID { $$ = copyString(tokenString); }
-                    ;
-number              : NUM { $$ = atoi(tokenString); }
-                    ;
-
 program             : declaration_list
                         { savedTree = $1;}
+identifier          : ID
+                        { savedName = copyString(tokenString); }
                     ;
+number              : NUM
+                        { savedNum = atoi(tokenString); }
+                    ;                    ;
 declaration_list    : declaration_list declaration
                         {
                             YYSTYPE t = $1;
@@ -55,7 +58,8 @@ declaration_list    : declaration_list declaration
                             }
                             else $$ = $2;
                         }
-                    | declaration  { $$ = $1; }
+                    | declaration 
+                        { $$ = $1; }
                     ;
 declaration         : var_declaration
                         { $$ = $1; }
@@ -66,14 +70,14 @@ var_declaration     : type_specifier identifier SEMI
                         {
                             $$ = newDeclNode(VarDeclK);
                             $$->child[0] = $1;
-                            $$->attr.name = $2;
+                            $$->attr.name = savedName;
                         }
                     | type_specifier identifier LBRACKET number RBRACKET
                         {
                             $$ = newDeclNode(ArrDeclK);
                             $$->child[0] = $1;
-                            $$->attr.arrayattr.name = $2;
-                            $$->attr.arrayattr.size = $4;
+                            $$->attr.arrayattr.name = savedName;
+                            $$->attr.arrayattr.size = savedNum;
                         }
                     ;
 type_specifier      : INT
@@ -90,16 +94,14 @@ type_specifier      : INT
 fun_declaration     : type_specifier identifier LPAREN params RPAREN compound_stmt
                         {
                             $$ = newDeclNode(FunDeclK);
-                            $$->child[0] = $1
-                            $$->attr.name = $2;
+                            $$->child[0] = $1;
+                            $$->attr.name = savedName;
                             $$->child[1] = $4; /* params */
                             $$->child[2] = $6; /* statements */
                         }
                     ;
 params              : param_list
-                        {
-                            $$ = $1;
-                        }
+                        { $$ = $1; }
                     | VOID
                         {
                             $$ = newTypeNode(TypeGeneralK);
@@ -125,20 +127,20 @@ param_list          : param_list COMMA param
 param               : type_specifier identifier
                         {
                             $$ = newDeclNode(VarDeclK);
-                            $$->child[0] = $1
-                            $$->attr.name = $2;
+                            $$->child[0] = $1;
+                            $$->attr.name = savedName;
                         }
                     | type_specifier identifier LBRACKET RBRACKET
                         {
                             $$ = newDeclNode(ArrDeclK);
-                            $$->child[0] = $1
-                            $$->attr.arrayattr.name = $2;
+                            $$->child[0] = $1;
+                            $$->attr.arrayattr.name = savedName;
                             $$->attr.arrayattr.size = 0;
                         }
                     ;
 compound_stmt       : LBRACE local_declarations statement_list RBRACE
                         {
-                            $$ = newStmtNode(CompundK);
+                            $$ = newStmtNode(CompoundK);
                             $$->child[0] = $2;
                             $$->child[1] = $3;
                         }
@@ -224,12 +226,12 @@ expression          : var ASSIGN expression
 var                 : identifier
                         {
                             $$ = newExpNode(VarK);
-                            $$->attr.name = identifier;
+                            $$->attr.name = savedName;
                         }
                     | identifier LBRACKET expression RBRACKET
                         {
                             $$ = newExpNode(ArrK);
-                            $$->attr.name = identifier;
+                            $$->attr.name = savedName;
                             $$->child[0] = $3;
                         }
                     ;
@@ -321,7 +323,7 @@ factor              : LPAREN expression RPAREN { $$ = $2; }
 call                : identifier LPAREN args RPAREN
                         {
                             $$ = newExpNode(CallK);
-                            $$->attr.name = $1;
+                            $$->attr.name = savedName;
                             $$->child[0] = $3;
                         }
                     ;
