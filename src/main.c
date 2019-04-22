@@ -7,9 +7,11 @@
 /****************************************************/
 
 #include "globals.h"
+#include "util.h"
+#include <assert.h>
 
 /* set NO_PARSE to TRUE to get a scanner-only compiler */
-#define NO_PARSE TRUE
+#define NO_PARSE FALSE
 /* set NO_ANALYZE to TRUE to get a parser-only compiler */
 #define NO_ANALYZE TRUE
 
@@ -36,9 +38,8 @@ FILE *listing;
 FILE *code;
 
 /* allocate and set tracing flags */
-int EchoSource = FALSE;
 int TraceScan = TRUE;
-int TraceParse = FALSE;
+int TraceParse = TRUE;
 int TraceAnalyze = FALSE;
 int TraceCode = FALSE;
 
@@ -58,7 +59,7 @@ int main(int argc, char *argv[])
   }
   strcpy(pgm, argv[1]);
   if (strchr(pgm, '.') == NULL)
-    strcat(pgm, ".tny");
+    strcat(pgm, ".c");
   source = fopen(pgm, "r");
   if (source == NULL)
   {
@@ -66,11 +67,13 @@ int main(int argc, char *argv[])
     exit(1);
   }
   listing = stdout; /* send listing to screen */
-  fprintf(listing, "\tline number\ttoken\t\tlexeme\n");
-  for(i = 0; i < 54; i++) {
-    fputc('-', listing);
+  if(TraceScan) {
+    fprintf(listing, "\tline number\ttoken\t\tlexeme\n");
+    for(i = 0; i < 54; i++) {
+      fputc('-', listing);
+    }
+    fputc('\n', listing);
   }
-  fputc('\n', listing);
 #if NO_PARSE
   while (getToken() != ENDFILE)
     ;

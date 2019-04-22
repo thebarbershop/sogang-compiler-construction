@@ -73,7 +73,7 @@ void printToken(TokenType token, const char *tokenString)
     fprintf(listing, "\t\tID\t\t%s\n", tokenString);
     break;
   default: /* should never happen */
-    fprintf(listing, "Unknown token: %d\n", token);
+    fprintf(listing, "Unknown token: %d from \"%s\" at line %d\n", token, tokenString, lineno);
   }
 }
 
@@ -235,8 +235,7 @@ void printTree(TreeNode *tree)
         fprintf(listing, "Assign Expression\n");
         break;
       case OpK:
-        fprintf(listing, "Op: ");
-        printToken(tree->attr.op, "\0");
+        fprintf(listing, "Op: %s\n", getOp(tree->attr.op));
         break;
       case ConstK:
         fprintf(listing, "Const: %d\n", tree->attr.val);
@@ -263,7 +262,6 @@ void printTree(TreeNode *tree)
         break;
       case ArrDeclK:
         fprintf(listing, "Array Declaration: %s[%d]\n", tree->attr.arrayattr.name, tree->attr.arrayattr.size);
-        printToken(tree->attr.op, "\0");
         break;
       case FunDeclK:
         fprintf(listing, "Function Declaration: %s\n", tree->attr.name);
@@ -300,4 +298,21 @@ void printTree(TreeNode *tree)
     tree = tree->sibling;
   }
   UNINDENT;
+}
+
+/* Return string for the given speration */
+char *getOp(TokenType op) {
+  switch(op) {
+    case PLUS:  return "+" ;  
+    case MINUS: return "-" ;  
+    case TIMES: return "*" ;  
+    case OVER:  return "/" ;  
+    case LT:    return "<" ;  
+    case LTE:   return "<=";  
+    case GT:    return ">" ;  
+    case GTE:   return ">=";    
+    case EQ:    return "==";
+    case NEQ:   return "!=";
+    default:    return ""  ;
+  }
 }

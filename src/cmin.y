@@ -43,7 +43,7 @@ identifier          : ID
                     ;
 number              : NUM
                         { savedNum = atoi(tokenString); }
-                    ;                    ;
+                    ;
 declaration_list    : declaration_list declaration
                         {
                             YYSTYPE t = $1;
@@ -72,11 +72,15 @@ var_declaration     : type_specifier identifier SEMI
                             $$->child[0] = $1;
                             $$->attr.name = savedName;
                         }
-                    | type_specifier identifier LBRACKET number RBRACKET SEMI
+                    | type_specifier identifier LBRACKET
                         {
                             $$ = newDeclNode(ArrDeclK);
                             $$->child[0] = $1;
                             $$->attr.arrayattr.name = savedName;
+                        }
+                        number RBRACKET SEMI
+                        {
+                            $$ = $4;
                             $$->attr.arrayattr.size = savedNum;
                         }
                     ;
@@ -91,13 +95,17 @@ type_specifier      : INT
                             $$->type = VOID;
                         }
                     ;
-fun_declaration     : type_specifier identifier LPAREN params RPAREN compound_stmt
+fun_declaration     : type_specifier identifier LPAREN
                         {
                             $$ = newDeclNode(FunDeclK);
                             $$->child[0] = $1;
                             $$->attr.name = savedName;
-                            $$->child[1] = $4; /* params */
-                            $$->child[2] = $6; /* statements */
+                        }
+                        params RPAREN compound_stmt
+                        {
+                            $$ = $4;
+                            $$->child[1] = $5; /* params */
+                            $$->child[2] = $7; /* statements */
                         }
                     ;
 params              : param_list
