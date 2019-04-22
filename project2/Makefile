@@ -1,6 +1,6 @@
 CC = gcc
 
-CFLAGS=-std=c11 -Wall -Werror -O3 -Wpedantic -Wconversion
+CFLAGS=-std=c11 -Wall -Werror -O3 -Wpedantic
 
 .SUFFIXES: .c .o
 
@@ -11,10 +11,10 @@ OBJS=$(SRCS:.c=.o)
 	$(CC) -o $@ $(OBJS)
 
 lex.yy.c: cmin.l
-	flex cmin.l
+	flex -o lex.yy.c cmin.l
 
 y.tab.c: cmin.y
-	bison -d cmin.y
+	bison -d cmin.y -o y.tab.c
 
 .PHONY: clean
 clean:
