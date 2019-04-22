@@ -12,6 +12,8 @@
 /* MAXTOKENLEN is the maximum size of a token */
 #define MAXTOKENLEN 40
 
+#include "globals.h"
+
 /* tokenString array stores the lexeme of each token */
 extern char tokenString[MAXTOKENLEN + 1];
 
