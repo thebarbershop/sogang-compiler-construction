@@ -241,13 +241,14 @@ void printTree(TreeNode *tree)
         fprintf(listing, "Const: %d\n", tree->attr.val);
         break;
       case VarK:
-        fprintf(listing, "Id: %s\n", tree->attr.name);
+        fprintf(listing, "Variable ID: %s\n", tree->attr.name);
         break;
       case ArrK:
-        fprintf(listing, "Array: %s[%d]\n", tree->attr.arrayattr.name, tree->attr.arrayattr.size);
+        fprintf(listing, "Array ID: %s[%d]\n", tree->attr.arrayattr.name, tree->attr.arrayattr.size);
         break;
       case CallK:
         fprintf(listing, "Calling: %s\n", tree->attr.name);
+        break;
       default:
         fprintf(listing, "Unknown ExpNode kind\n");
         break;
