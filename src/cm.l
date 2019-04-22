@@ -7,7 +7,6 @@
 /* Modified by Eom Taegyung                         */
 /****************************************************/
 
-%option yylineno
 %option noyywrap noinput nounput
 %option never-interactive
 %{
@@ -58,7 +57,7 @@ whitespace  [ \t]+
 
 {number}        {return NUM;}
 {identifier}    {return ID;}
-{newline}       {/* yylineno increments */}
+{newline}       {lineno++;}
 {whitespace}    {/* skip whitespace */}
 
 "/*"            {BEGIN(COMMENT);}
@@ -78,14 +77,14 @@ TokenType getToken(void)
   TokenType currentToken;
   if (firstTime)
   { firstTime = FALSE;
-/*    lineno++; */
+    lineno++;
     yyin = source;
     yyout = listing;
   }
   currentToken = yylex();
   strncpy(tokenString,yytext,MAXTOKENLEN);
   if (TraceScan) {
-    fprintf(listing, "\t%d", yylineno);
+    fprintf(listing, "\t%d", lineno);
     printToken(currentToken,tokenString);
   }
   return currentToken;
