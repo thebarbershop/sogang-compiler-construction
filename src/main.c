@@ -6,7 +6,7 @@
 /* Modified by Eom Taegyung                         */
 /****************************************************/
 
-#include "globals.h"
+#include "globals.h" 
 #include "util.h"
 #include <assert.h>
 
