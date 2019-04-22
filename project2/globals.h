@@ -26,43 +26,7 @@
 /* MAXRESERVED = the number of reserved words */
 #define MAXRESERVED 6
 
-/* Match the order of cmin.l */
-typedef enum
-/* book-keeping tokens */
-{
-   ENDFILE,
-   ERROR,
-   /* reserved words */
-   ELSE,
-   IF,
-   INT,
-   RETURN,
-   VOID,
-   WHILE,
-   /* special symbols */
-   PLUS,
-   MINUS,
-   TIMES,
-   OVER,
-   LT,
-   LTE,
-   GT,
-   GTE,
-   EQ,
-   NEQ,
-   ASSIGN,
-   SEMI,
-   COMMA,
-   LPAREN,
-   RPAREN,
-   LBRACKET,
-   RBRACKET,
-   LBRACE,
-   RBRACE,
-   /* multicharacter tokens */
-   ID,
-   NUM
-} TokenType;
+typedef unsigned int TokenType;
 
 extern FILE *source;  /* source code text file */
 extern FILE *listing; /* listing output text file */
