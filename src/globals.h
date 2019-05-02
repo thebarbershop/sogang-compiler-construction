@@ -59,7 +59,8 @@ typedef enum
    StmtK,
    ExpK,
    DeclK,
-   TypeK
+   TypeK,
+   ParamK
 } NodeKind;
 typedef enum
 {
@@ -87,6 +88,12 @@ typedef enum
 {
    TypeGeneralK
 } TypeKind;
+typedef enum
+{
+   VarParamK,
+   ArrParamK,
+   VoidParamK
+} ParamKind;
 
 /* ExpType is used for type checking */
 typedef enum
@@ -114,6 +121,7 @@ typedef struct treeNode
       ExpKind exp;
       DeclKind decl;
       TypeKind type;
+      ParamKind param;
    } kind;
    union {
       TokenType op;        /* for operator */

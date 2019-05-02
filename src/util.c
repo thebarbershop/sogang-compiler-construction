@@ -159,7 +159,23 @@ TreeNode *newTypeNode(TypeKind kind)
   return t;
 }
 
-
+TreeNode *newParamNode(ParamKind kind)
+{
+  TreeNode *t = (TreeNode *)malloc(sizeof(TreeNode));
+  int i;
+  if (t == NULL)
+    fprintf(listing, "Out of memory error at line %d\n", lineno);
+  else
+  {
+    for (i = 0; i < MAXCHILDREN; i++)
+      t->child[i] = NULL;
+    t->sibling = NULL;
+    t->nodekind = ParamK;
+    t->kind.param = kind;
+    t->lineno = lineno;
+  }
+  return t;
+}
 
 /* Function copyString allocates and makes a new
  * copy of an existing string
@@ -241,10 +257,10 @@ void printTree(TreeNode *tree)
         fprintf(listing, "Const: %d\n", tree->attr.val);
         break;
       case VarK:
-        fprintf(listing, "Variable ID: %s\n", tree->attr.name);
+        fprintf(listing, "Variable: %s\n", tree->attr.name);
         break;
       case ArrK:
-        fprintf(listing, "Array ID: %s[%d]\n", tree->attr.arrayattr.name, tree->attr.arrayattr.size);
+        fprintf(listing, "Array: %s[]\n", tree->attr.arrayattr.name);
         break;
       case CallK:
         fprintf(listing, "Calling: %s\n", tree->attr.name);
@@ -278,11 +294,11 @@ void printTree(TreeNode *tree)
       {
       char *type;
       case TypeGeneralK:
-        if(tree->type == (ExpType)INT) {
-          type = "INT";
+        if(tree->type == Integer) {
+          type = "int";
         }
         else {
-          type = "VOID";
+          type = "void";
         }
         fprintf(listing, "Type: %s\n", type);
         break;
@@ -291,7 +307,24 @@ void printTree(TreeNode *tree)
         break;
       }
     }
-
+    else if (tree->nodekind == ParamK)
+    {
+      switch (tree->kind.param)
+      {
+      case VarParamK:
+        fprintf(listing, "Parameter: variable %s\n", tree->attr.name);
+        break;
+      case ArrParamK:
+        fprintf(listing, "Parameter: array %s[]\n", tree->attr.arrayattr.name);
+        break;
+      case VoidParamK:
+        fprintf(listing, "Parameter: void\n");
+        break;
+      default:
+        fprintf(listing, "Unknown ParameterNode kind\n");
+        break;
+      }
+    }
     else
       fprintf(listing, "Unknown node kind\n");
     for (i = 0; i < MAXCHILDREN; i++)

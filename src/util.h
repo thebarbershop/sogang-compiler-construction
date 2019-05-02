@@ -36,6 +36,11 @@ TreeNode *newDeclNode(DeclKind);
  */
 TreeNode *newTypeNode(TypeKind);
 
+/* Function newParamNode creates a new parameter
+ * node for syntax tree construction
+ */
+TreeNode *newParamNode(ParamKind);
+
 /* Function copyString allocates and makes a new
  * copy of an existing string
  */

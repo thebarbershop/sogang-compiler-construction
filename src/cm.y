@@ -87,12 +87,12 @@ var_declaration     : type_specifier identifier SEMI
 type_specifier      : INT
                         {
                             $$ = newTypeNode(TypeGeneralK);
-                            $$->type = INT;
+                            $$->type = Integer;
                         }
                     | VOID
                         {
                             $$ = newTypeNode(TypeGeneralK);
-                            $$->type = VOID;
+                            $$->type = Void;
                         }
                     ;
 fun_declaration     : type_specifier identifier LPAREN
@@ -112,8 +112,7 @@ params              : param_list
                         { $$ = $1; }
                     | VOID
                         {
-                            $$ = newTypeNode(TypeGeneralK);
-                            $$->type = VOID;
+                            $$ = newParamNode(VoidParamK);
                         }
                     ;
 param_list          : param_list COMMA param
@@ -134,13 +133,13 @@ param_list          : param_list COMMA param
                     ;
 param               : type_specifier identifier
                         {
-                            $$ = newDeclNode(VarDeclK);
+                            $$ = newParamNode(VarParamK);
                             $$->child[0] = $1;
                             $$->attr.name = savedName;
                         }
                     | type_specifier identifier LBRACKET RBRACKET
                         {
-                            $$ = newDeclNode(ArrDeclK);
+                            $$ = newParamNode(ArrParamK);
                             $$->child[0] = $1;
                             $$->attr.arrayattr.name = savedName;
                             $$->attr.arrayattr.size = 0;
