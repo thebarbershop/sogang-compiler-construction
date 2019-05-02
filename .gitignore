@@ -4,3 +4,6 @@
 *.o
 20120085
 lex.yy.c
+y.tab.c
+y.tab.h
+stdout
