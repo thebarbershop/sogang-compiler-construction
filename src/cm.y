@@ -17,7 +17,6 @@
 #define YYSTYPE TreeNode *
 
 static char * savedName; /* for use in assignments */
-static int savedNum;      /* ditto */
 static TreeNode * savedTree; /* stores syntax tree for later return */
 
 static int yylex(void);
@@ -42,7 +41,10 @@ identifier          : ID
                         { savedName = copyString(tokenString); }
                     ;
 number              : NUM
-                        { savedNum = atoi(tokenString); }
+                        {
+                            $$ = newExpNode(ConstK);
+                            $$->attr.val = atoi(tokenString);
+                        }
                     ;
 declaration_list    : declaration_list declaration
                         {
@@ -76,12 +78,12 @@ var_declaration     : type_specifier identifier SEMI
                         {
                             $$ = newDeclNode(ArrDeclK);
                             $$->child[0] = $1;
-                            $$->attr.arrayattr.name = savedName;
+                            $$->attr.name = savedName;
                         }
                         number RBRACKET SEMI
                         {
                             $$ = $4;
-                            $$->attr.arrayattr.size = savedNum;
+                            $$->child[1] = $5;
                         }
                     ;
 type_specifier      : INT
@@ -141,8 +143,7 @@ param               : type_specifier identifier
                         {
                             $$ = newParamNode(ArrParamK);
                             $$->child[0] = $1;
-                            $$->attr.arrayattr.name = savedName;
-                            $$->attr.arrayattr.size = 0;
+                            $$->attr.name = savedName;
                         }
                     ;
 compound_stmt       : LBRACE local_declarations statement_list RBRACE
@@ -327,10 +328,7 @@ mulop               : TIMES
 factor              : LPAREN expression RPAREN { $$ = $2; }
                     | var { $$ = $1; }
                     | call { $$ = $1; }
-                    | NUM
-                         { $$ = newExpNode(ConstK);
-                           $$->attr.val = atoi(tokenString);
-                         }
+                    | number { $$ = $1; }
                     ;
 call                : identifier
                         {

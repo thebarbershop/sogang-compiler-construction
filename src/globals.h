@@ -104,12 +104,6 @@ typedef enum
 
 #define MAXCHILDREN 3
 
-typedef struct arrayAttr
-{
-   char *name;
-   int size;
-} ArrayAttr;
-
 typedef struct treeNode
 {
    struct treeNode *child[MAXCHILDREN];
@@ -127,7 +121,6 @@ typedef struct treeNode
       TokenType op;        /* for operator */
       int val;             /* for constant */
       char *name;          /* for variable */
-      ArrayAttr arrayattr; /* for array */
    } attr;
    ExpType type; /* for type checking of exps */
 } TreeNode;
