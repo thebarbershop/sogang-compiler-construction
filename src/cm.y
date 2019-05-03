@@ -24,7 +24,7 @@ int yyerror(char * message);
 
 %}
 
-%token ENDFILE ERROR
+%token ERROR
 /* reserved words */
 %token ELSE IF INT RETURN VOID WHILE
 /* special symbols */
@@ -378,15 +378,7 @@ int yyerror(char * message)
  */
 static int yylex(void)
 { 
-  TokenType token = getToken();
-
-  switch(token) {
-    case ENDFILE:
-      return 0;
-      break;
-    default:
-      return token;
-  }
+  return getToken();
 }
 
 TreeNode * parse(void)

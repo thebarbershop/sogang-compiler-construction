@@ -17,6 +17,7 @@
 
 #ifndef YYPARSER
 #include "y.tab.h"
+#define ENDFILE 0
 #endif
 
 #ifndef FALSE
