@@ -120,7 +120,7 @@ typedef struct treeNode
       int val;             /* for constant */
       char *name;          /* for variable */
    } attr;
-   ExpType type; /* for type checking of exps and decls */
+   ExpType type; /* for type checking of exps */
 } TreeNode;
 
 /**************************************************/
