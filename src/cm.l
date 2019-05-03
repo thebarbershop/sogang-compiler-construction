@@ -1,5 +1,5 @@
 /****************************************************/
-/* File: cmin.l                                     */
+/* File: cm.l                                       */
 /* Lex specification for C-                         */
 /* Based on tiny.l source code from                 */
 /* Compiler Construction: Principles and Practice   */

@@ -1,5 +1,5 @@
 /****************************************************/
-/* File: cmin.y                                     */
+/* File: cm.y                                       */
 /* The C- Yacc/Bison specification file             */
 /* Based on tiny.y source code from                 */
 /* Compiler Construction: Principles and Practice   */
