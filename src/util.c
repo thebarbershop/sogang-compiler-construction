@@ -312,10 +312,10 @@ void printTree(TreeNode *tree)
       switch (tree->kind.param)
       {
       case VarParamK:
-        fprintf(listing, "Parameter: variable %s\n", tree->attr.name);
+        fprintf(listing, "Parameter (variable): %s\n", tree->attr.name);
         break;
       case ArrParamK:
-        fprintf(listing, "Parameter: array %s\n", tree->attr.name);
+        fprintf(listing, "Parameter (array): %s\n", tree->attr.name);
         break;
       case VoidParamK:
         fprintf(listing, "Parameter: void\n");
