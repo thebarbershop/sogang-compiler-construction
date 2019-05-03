@@ -22,13 +22,14 @@ int yyerror(char * message);
 
 %}
 
-%token ERROR
 /* reserved words */
 %token ELSE IF INT RETURN VOID WHILE
 /* special symbols */
 %token PLUS MINUS TIMES OVER LT LTE GT GTE EQ NEQ ASSIGN SEMI COMMA LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
 /* multicharacter tokens */
 %token ID NUM
+
+%right THEN ELSE
 
 %% /* Grammar for C- */
 
@@ -191,7 +192,7 @@ statement           : expression_stmt { $$ = $1; }
                     ;
 expression_stmt     : expression SEMI { $$ = $1; }
                     | SEMI { $$ = NULL; }
-selection_stmt      : IF LPAREN expression RPAREN statement
+selection_stmt      : IF LPAREN expression RPAREN statement %prec THEN
                         {
                             $$ = newStmtNode(SelectionK);
                             $$->child[0] = $3;
