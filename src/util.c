@@ -219,8 +219,14 @@ void printTree(TreeNode *tree)
 {
   int i;
   INDENT;
+  int sibling = 0;
   while (tree != NULL)
   {
+    if(!sibling && tree->sibling != NULL) {
+      printSpaces();
+      fprintf(listing, "(\n");
+      INDENT;
+    }
     printSpaces();
     if (tree->nodekind == StmtK)
     {
@@ -330,6 +336,14 @@ void printTree(TreeNode *tree)
     for (i = 0; i < MAXCHILDREN; i++)
       printTree(tree->child[i]);
     tree = tree->sibling;
+    if(sibling && tree == NULL){
+      UNINDENT;
+      printSpaces();
+      fprintf(listing, ")\n");
+    }
+    if(tree!=NULL) {
+      sibling++;
+    }
   }
   UNINDENT;
 }
