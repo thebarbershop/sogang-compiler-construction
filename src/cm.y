@@ -368,7 +368,7 @@ empty               : /* epsilon */ { $$ = NULL; }
 
 int yyerror(char * message)
 { fprintf(listing,"Syntax error at line %d: %s\n",lineno,message);
-  fprintf(listing,"Current token: ");
+  fprintf(listing, "Error found while parsing token:");
   printToken(yychar,tokenString);
   Error = TRUE;
   return 0;
