@@ -53,4 +53,8 @@ void printTree(TreeNode *);
 
 char *getOp(TokenType);
 
+/* function getToken returns the next token in source file */
+TokenType getToken(void);
+TreeNode *parse(void);
+
 #endif

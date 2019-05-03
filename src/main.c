@@ -22,7 +22,7 @@
 
 #if NO_PARSE
 #else
-#include "parse.h"
+#include "y.tab.h"
 #if !NO_ANALYZE
 #include "analyze.h"
 #if !NO_CODE
