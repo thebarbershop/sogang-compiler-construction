@@ -29,7 +29,9 @@ int yyerror(char * message);
 /* multicharacter tokens */
 %token ID NUM
 
-%right THEN ELSE
+/* Precedence directive to resolve
+    shift-reduce conflict of dangling else problem. */
+%right NOELSE ELSE
 
 %% /* Grammar for C- */
 
@@ -192,7 +194,7 @@ statement           : expression_stmt { $$ = $1; }
                     ;
 expression_stmt     : expression SEMI { $$ = $1; }
                     | SEMI { $$ = NULL; }
-selection_stmt      : IF LPAREN expression RPAREN statement %prec THEN
+selection_stmt      : IF LPAREN expression RPAREN statement %prec NOELSE
                         {
                             $$ = newStmtNode(SelectionK);
                             $$->child[0] = $3;
