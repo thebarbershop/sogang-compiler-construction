@@ -9,7 +9,6 @@
 %{
 #define YYPARSER /* distinguishes Yacc output from other code files */
 
-#include "globals.h"
 #include "util.h"
 
 #define YYSTYPE TreeNode *
