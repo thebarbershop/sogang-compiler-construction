@@ -82,7 +82,7 @@ void printToken(TokenType token, const char *tokenString)
  */
 TreeNode *newStmtNode(StmtKind kind)
 {
-  TreeNode *t = (TreeNode *)malloc(sizeof(TreeNode));
+  TreeNode *t = malloc(sizeof(TreeNode));
   int i;
   if (t == NULL)
     fprintf(listing, "Out of memory error at line %d\n", lineno);
@@ -103,7 +103,7 @@ TreeNode *newStmtNode(StmtKind kind)
  */
 TreeNode *newExpNode(ExpKind kind)
 {
-  TreeNode *t = (TreeNode *)malloc(sizeof(TreeNode));
+  TreeNode *t = malloc(sizeof(TreeNode));
   int i;
   if (t == NULL)
     fprintf(listing, "Out of memory error at line %d\n", lineno);
@@ -125,7 +125,7 @@ TreeNode *newExpNode(ExpKind kind)
  */
 TreeNode *newDeclNode(DeclKind kind)
 {
-  TreeNode *t = (TreeNode *)malloc(sizeof(TreeNode));
+  TreeNode *t = malloc(sizeof(TreeNode));
   int i;
   if (t == NULL)
     fprintf(listing, "Out of memory error at line %d\n", lineno);
@@ -143,7 +143,7 @@ TreeNode *newDeclNode(DeclKind kind)
 
 TreeNode *newTypeNode(TypeKind kind)
 {
-  TreeNode *t = (TreeNode *)malloc(sizeof(TreeNode));
+  TreeNode *t = malloc(sizeof(TreeNode));
   int i;
   if (t == NULL)
     fprintf(listing, "Out of memory error at line %d\n", lineno);
@@ -161,7 +161,7 @@ TreeNode *newTypeNode(TypeKind kind)
 
 TreeNode *newParamNode(ParamKind kind)
 {
-  TreeNode *t = (TreeNode *)malloc(sizeof(TreeNode));
+  TreeNode *t = malloc(sizeof(TreeNode));
   int i;
   if (t == NULL)
     fprintf(listing, "Out of memory error at line %d\n", lineno);
