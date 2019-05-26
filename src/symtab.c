@@ -15,11 +15,11 @@
 #include "symtab.h"
 
 /* SIZE is the size of the hash table */
-#define SIZE 211
+enum { SIZE = 211 };
 
 /* SHIFT is the power of two used as multiplier
    in hash function  */
-#define SHIFT 4
+enum { SHIFT=4 };
 
 /* the hash function */
 static int hash(char *key)

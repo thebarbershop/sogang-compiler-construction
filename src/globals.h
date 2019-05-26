@@ -17,8 +17,8 @@
 
 #ifndef YYPARSER
 #include "y.tab.h"
-#define ENDFILE 0
-#define ERROR 65535
+enum { ENDFILE = 0 };
+enum { ERROR = 65535 };
 #endif
 
 #ifndef FALSE
@@ -30,7 +30,7 @@
 #endif
 
 /* MAXRESERVED = the number of reserved words */
-#define MAXRESERVED 6
+enum { MAXRESERVED = 6 };
 
 typedef int TokenType;
 
@@ -42,7 +42,7 @@ extern int lineno; /* source line number for listing */
 
 /**************************************************/
 /* The following lines are copied from scan.h     */
-#define MAXTOKENLEN 40
+enum { MAXTOKENLEN = 40 };
 
 /* tokenString array stores the lexeme of each token */
 extern char tokenString[MAXTOKENLEN + 1];
@@ -100,7 +100,7 @@ typedef enum
    Integer
 } ExpType;
 
-#define MAXCHILDREN 3
+enum { MAXCHILDREN = 3 };
 
 typedef struct treeNode
 {
