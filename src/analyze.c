@@ -11,8 +11,11 @@
 #include "symtab.h"
 #include "analyze.h"
 
-/* counter for variable memory locations */
-static int location = 0;
+static void typeError(TreeNode *t, const char *message)
+{
+  fprintf(listing, "Type error at line %d: %s\n", t->lineno, message);
+  Error = TRUE;
+}
 
 /* Procedure traverse is a generic recursive 
  * syntax tree traversal routine:
@@ -28,8 +31,9 @@ static void traverse(TreeNode *t,
     preProc(t);
     {
       int i;
-      for (i = 0; i < MAXCHILDREN; i++)
+      for (i = 0; i < MAXCHILDREN; i++) {
         traverse(t->child[i], preProc, postProc);
+      }
     }
     postProc(t);
     traverse(t->sibling, preProc, postProc);
@@ -48,49 +52,119 @@ static void nullProc(TreeNode *t)
     return;
 }
 
+static int flag_functionDeclared = 0;
 /* Procedure insertNode inserts 
  * identifiers stored in t into 
  * the symbol table 
  */
 static void insertNode(TreeNode *t)
 {
-  switch (t->nodekind)
-  {
-  case StmtK:
-    switch (t->kind.stmt)
+  while(t) {
+    switch (t->nodekind)
     {
-    case AssignK:
-    case ReadK:
-      if (st_lookup(t->attr.name) == -1)
-        /* not yet in table, so treat as new definition */
-        st_insert(t->attr.name, t->lineno, location++);
-      else
-        /* already in table, so ignore location, 
-             add line number of use only */
-        st_insert(t->attr.name, t->lineno, 0);
+    case StmtK:
+      switch(t->kind.stmt)
+      {
+        case CompoundK:
+        {
+          int scope_incremented = 0;
+          if(!flag_functionDeclared)
+          {
+            incrementScope();
+            scope_incremented = 1;
+          }
+          else
+            flag_functionDeclared = 0;
+          insertNode(t->child[0]);
+          insertNode(t->child[1]);
+          if(TraceAnalyze)
+            printSymTab(listing);
+          if(scope_incremented)
+            decrementScope();
+          break;
+        }
+        case SelectionK:
+          insertNode(t->child[0]);
+          insertNode(t->child[1]);
+          insertNode(t->child[2]);
+          break;
+        case IterationK:
+          insertNode(t->child[0]);
+          insertNode(t->child[1]);
+          break;
+        case ReturnK:
+          insertNode(t->child[0]);
+          break;
+      }
       break;
-    default:
+    case ExpK:
+      switch (t->kind.exp)
+      {
+      case AssignK:
+        insertNode(t->child[1]);
+        insertNode(t->child[0]);
+        break;
+      case OpK:
+        insertNode(t->child[0]);
+        insertNode(t->child[1]);
+        break;
+      case ConstK:
+        break;
+      case VarK:
+        referenceSymbol(t);
+        break;
+      case ArrK:
+        referenceSymbol(t);
+        insertNode(t->child[0]);
+        break;
+      case CallK:
+        referenceSymbol(t);
+        insertNode(t->child[0]);
+        break;
+      }
+      break;
+    case DeclK:
+      switch(t->kind.decl)
+      {
+      case VarDeclK:
+        registerSymbol(t);
+        insertNode(t->child[0]);
+        break;
+      case ArrDeclK:
+        registerSymbol(t);
+        insertNode(t->child[0]);
+        insertNode(t->child[1]);
+        break;
+      case FunDeclK:
+        flag_functionDeclared = 1;
+        registerSymbol(t);
+        incrementScope();
+        insertNode(t->child[0]);
+        insertNode(t->child[1]);
+        insertNode(t->child[2]);
+        decrementScope();
+        flag_functionDeclared = 0;
+        break;
+      }
+    case TypeK:
+      break;
+    case ParamK:
+      switch (t->kind.param)
+      {
+      case VarParamK:
+        registerSymbol(t);
+        insertNode(t->child[0]);
+        break;
+      case ArrParamK:
+        registerSymbol(t);
+        insertNode(t->child[0]);
+        break;
+      case VoidParamK:
+        break;
+      }
       break;
     }
-    break;
-  case ExpK:
-    switch (t->kind.exp)
-    {
-    case IdK:
-      if (st_lookup(t->attr.name) == -1)
-        /* not yet in table, so treat as new definition */
-        st_insert(t->attr.name, t->lineno, location++);
-      else
-        /* already in table, so ignore location, 
-             add line number of use only */
-        st_insert(t->attr.name, t->lineno, 0);
-      break;
-    default:
-      break;
-    }
-    break;
-  default:
-    break;
+    t = t->sibling;
   }
 }
 
@@ -99,18 +173,12 @@ static void insertNode(TreeNode *t)
  */
 void buildSymtab(TreeNode *syntaxTree)
 {
-  traverse(syntaxTree, insertNode, nullProc);
+  initSymTab();
+  insertNode(syntaxTree);
   if (TraceAnalyze)
   {
-    fprintf(listing, "\nSymbol table:\n\n");
     printSymTab(listing);
   }
-}
-
-static void typeError(TreeNode *t, char *message)
-{
-  fprintf(listing, "Type error at line %d: %s\n", t->lineno, message);
-  Error = TRUE;
 }
 
 /* Procedure checkNode performs
@@ -127,14 +195,12 @@ static void checkNode(TreeNode *t)
       if ((t->child[0]->type != Integer) ||
           (t->child[1]->type != Integer))
         typeError(t, "Op applied to non-integer");
-      if ((t->attr.op == EQ) || (t->attr.op == LT))
-        t->type = Boolean;
-      else
-        t->type = Integer;
+      t->type = Integer;
       break;
     case ConstK:
-    case IdK:
-      t->type = Integer;
+    case VarK:
+    case ArrK:
+//      t->type = Integer;
       break;
     default:
       break;
@@ -143,21 +209,21 @@ static void checkNode(TreeNode *t)
   case StmtK:
     switch (t->kind.stmt)
     {
-    case IfK:
-      if (t->child[0]->type == Integer)
-        typeError(t->child[0], "if test is not Boolean");
+    case SelectionK:
+      if (t->child[0]->type != Integer)
+        typeError(t->child[0], "if condition is not Integer");
+      break;
+    case IterationK:
+      if (t->child[0]->type != Integer)
+        typeError(t->child[0], "while condition is not Integer");
+      break;
+    case ReturnK:
+      if (t->child[0]->type != Integer)
+        typeError(t->child[0], "return value is not Integer");
       break;
     case AssignK:
-      if (t->child[0]->type != Integer)
-        typeError(t->child[0], "assignment of non-integer value");
-      break;
-    case WriteK:
-      if (t->child[0]->type != Integer)
-        typeError(t->child[0], "write of non-integer value");
-      break;
-    case RepeatK:
-      if (t->child[1]->type == Integer)
-        typeError(t->child[1], "repeat test is not Boolean");
+      if (t->child[0]->type != t->child[1]->type)
+        typeError(t->child[1], "assign type does not match");
       break;
     default:
       break;

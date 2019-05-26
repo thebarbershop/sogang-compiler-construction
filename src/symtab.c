@@ -14,98 +14,127 @@
 #include <string.h>
 #include "symtab.h"
 
-/* SIZE is the size of the hash table */
-enum { SIZE = 211 };
-
-/* SHIFT is the power of two used as multiplier
-   in hash function  */
-enum { SHIFT=4 };
-
-/* the hash function */
+/* the hash function which returns a number in [0, SIZE) */
 static int hash(char *key)
 {
   int temp = 0;
   int i = 0;
   while (key[i] != '\0')
   {
-    temp = ((temp << SHIFT) + key[i]) % SIZE;
+    temp = ((temp << HASH_SHIFT) + key[i]) % HASHTABLE_SIZE;
     ++i;
   }
   return temp;
 }
 
-/* the list of line numbers of the source 
- * code in which a variable is referenced
- */
-typedef struct LineListRec
+static void scopeError(TreeNode *t, const char *message)
 {
-  int lineno;
-  struct LineListRec *next;
-} * LineList;
+  char * kindtype;
+  switch (t->kind.exp) {
+  case ArrK:
+    kindtype = "Array";
+    break;
+  case VarK:
+    kindtype = "Variable";
+    break;
+  case CallK:
+    kindtype = "Function";
+    break;
+  default:
+    break;
+  }
+  fprintf(listing, "%s %s at line %d: %s\n", kindtype, t->attr.name, t->lineno, message);
+  Error=TRUE;
+}
 
-/* The record in the bucket lists for
- * each variable, including name, 
- * assigned memory location, and
- * the list of line numbers in which
- * it appears in the source code
- */
-typedef struct BucketListRec
-{
-  char *name;
-  LineList lines;
-  int memloc; /* memory location for variable */
-  struct BucketListRec *next;
-} * BucketList;
-
-/* the hash table */
-static BucketList hashTable[SIZE];
+/* the symbol table */
+static SymbolTable globalSymbolTable, currentScopeSymbolTable;
 
 /* Procedure st_insert inserts line numbers and
  * memory locations into the symbol table
  * loc = memory location is inserted only the
  * first time, otherwise ignored
  */
-void st_insert(char *name, int lineno, int loc)
+static void st_insert(char *name, int lineno, int loc)
 {
   int h = hash(name);
-  BucketList l = hashTable[h];
+  BucketList l = currentScopeSymbolTable->hashTable[h];
   while ((l != NULL) && (strcmp(name, l->name) != 0))
     l = l->next;
-  if (l == NULL) /* variable not yet in table */
+  if (l == NULL) /* symbol not yet in table */
   {
-    l = (BucketList)malloc(sizeof(struct BucketListRec));
+    l = malloc(sizeof(struct BucketListRec));
     l->name = name;
-    l->lines = (LineList)malloc(sizeof(struct LineListRec));
+    l->lines = malloc(sizeof(struct LineListRec));
     l->lines->lineno = lineno;
     l->memloc = loc;
     l->lines->next = NULL;
-    l->next = hashTable[h];
-    hashTable[h] = l;
+    l->next = currentScopeSymbolTable->hashTable[h];
+    currentScopeSymbolTable->hashTable[h] = l;
   }
   else /* found in table, so just add line number */
   {
     LineList t = l->lines;
     while (t->next != NULL)
+    {
+      if (t->lineno == lineno)
+        return; /* skip if lineno is already there */
       t = t->next;
-    t->next = (LineList)malloc(sizeof(struct LineListRec));
+    }
+    t->next = malloc(sizeof(struct LineListRec));
     t->next->lineno = lineno;
     t->next->next = NULL;
   }
 } /* st_insert */
 
-/* Function st_lookup returns the memory 
- * location of a variable or -1 if not found
- */
-int st_lookup(char *name)
+/* Attempts to reference symbol name. return 1 for success, 0 for failure. */
+int referenceSymbol(TreeNode *t)
 {
-  int h = hash(name);
-  BucketList l = hashTable[h];
-  while ((l != NULL) && (strcmp(name, l->name) != 0))
+  SymbolTable original_currentScopeSymbolTable = currentScopeSymbolTable;
+  while(currentScopeSymbolTable)
+  {
+    int h = hash(t->attr.name);
+    BucketList l = currentScopeSymbolTable->hashTable[h];
+    while ((l != NULL) && (strcmp(t->attr.name, l->name) != 0))
+      l = l->next;
+
+    if (l == NULL)
+      currentScopeSymbolTable = currentScopeSymbolTable->prev;
+    else
+    {
+      st_insert(t->attr.name, t->lineno, 0);
+      currentScopeSymbolTable = original_currentScopeSymbolTable;
+      return 1;
+    }
+  }
+  scopeError(t, "used without declaration");
+  return 0;
+}
+
+/* Attempts to register symbol name. return 1 for success, 0 for failure. */
+int registerSymbol(TreeNode *t) {
+
+  int h = hash(t->attr.name);
+  BucketList l = currentScopeSymbolTable->hashTable[h];
+  while ((l != NULL) && (strcmp(t->attr.name, l->name) != 0))
     l = l->next;
+
   if (l == NULL)
-    return -1;
+  { /* The symbol is not found in current scope. */
+    st_insert(t->attr.name, t->lineno, currentScopeSymbolTable->location++);
+    if (t->nodekind == DeclK && t->kind.decl == ArrDeclK)
+    {
+      currentScopeSymbolTable->location += (t->child[1]->attr.val-1);
+    }
+    return 1;
+  }
   else
-    return l->memloc;
+  {
+    char buffer[256];
+    sprintf(buffer, "already declared.");
+    scopeError(t, buffer);
+    return 0;
+  }
 }
 
 /* Procedure printSymTab prints a formatted 
@@ -113,19 +142,20 @@ int st_lookup(char *name)
  * to the listing file
  */
 void printSymTab(FILE *listing)
-{
+{ 
   int i;
-  fprintf(listing, "Variable Name  Location   Line Numbers\n");
-  fprintf(listing, "-------------  --------   ------------\n");
-  for (i = 0; i < SIZE; ++i)
+  fprintf(listing, "Variable Name  Scope  Location   Line Numbers\n");
+  fprintf(listing, "-------------  -----  --------   ------------\n");
+  for (i = 0; i < HASHTABLE_SIZE; ++i)
   {
-    if (hashTable[i] != NULL)
+    if (currentScopeSymbolTable->hashTable[i] != NULL)
     {
-      BucketList l = hashTable[i];
+      BucketList l = currentScopeSymbolTable->hashTable[i];
       while (l != NULL)
       {
         LineList t = l->lines;
         fprintf(listing, "%-14s ", l->name);
+        fprintf(listing, "%-5d ", currentScopeSymbolTable->depth);
         fprintf(listing, "%-8d  ", l->memloc);
         while (t != NULL)
         {
@@ -137,4 +167,39 @@ void printSymTab(FILE *listing)
       }
     }
   }
+  fprintf(listing, "\n");
 } /* printSymTab */
+
+/* Initializes the global static variable globalSymbolTable */
+void initSymTab()
+{
+  globalSymbolTable = malloc(sizeof(struct SymbolTableRec));
+  globalSymbolTable->depth = 0;
+  globalSymbolTable->prev = NULL;
+  globalSymbolTable->next = NULL;
+  for(int i = 0; i < HASHTABLE_SIZE; ++i)
+    globalSymbolTable->hashTable[i] = NULL;
+  currentScopeSymbolTable = globalSymbolTable;
+}
+
+/* increment current scope */
+void incrementScope()
+{
+  currentScopeSymbolTable->next = malloc(sizeof(struct SymbolTableRec));
+  currentScopeSymbolTable->next->depth = currentScopeSymbolTable->depth + 1;
+  currentScopeSymbolTable->next->prev = currentScopeSymbolTable;
+  currentScopeSymbolTable->next->next = NULL;
+  for(int i = 0; i < HASHTABLE_SIZE; ++i)
+    currentScopeSymbolTable->next->hashTable[i] = NULL;
+  currentScopeSymbolTable = currentScopeSymbolTable->next;
+
+}
+
+/* decrement scope */
+void decrementScope()
+{
+  for(int i = 0; i < HASHTABLE_SIZE; ++i)
+    if(currentScopeSymbolTable->hashTable[i])
+      free(currentScopeSymbolTable->hashTable[i]);
+  currentScopeSymbolTable = currentScopeSymbolTable->prev;
+}

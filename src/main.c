@@ -39,8 +39,8 @@ FILE *code;
 
 /* allocate and set tracing flags */
 int TraceScan = FALSE;
-int TraceParse = TRUE;
-int TraceAnalyze = FALSE;
+int TraceParse = FALSE;
+int TraceAnalyze = TRUE;
 int TraceCode = FALSE;
 
 int Error = FALSE;
@@ -87,14 +87,14 @@ int main(int argc, char *argv[])
 #if !NO_ANALYZE
   if (!Error)
   {
-    if (TraceAnalyze)
-      fprintf(listing, "\nBuilding Symbol Table...\n");
+    if(TraceAnalyze) {
+      fprintf(listing, "Building Symbol Tree..\n");
+    }
     buildSymtab(syntaxTree);
-    if (TraceAnalyze)
-      fprintf(listing, "\nChecking Types...\n");
+    if(TraceAnalyze && !Error) {
+      fprintf(listing, "Performing TypeCheck..\n");
+    }
     typeCheck(syntaxTree);
-    if (TraceAnalyze)
-      fprintf(listing, "\nType Checking Finished\n");
   }
 #if !NO_CODE
   if (!Error)
