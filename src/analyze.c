@@ -127,17 +127,17 @@ static void insertNode(TreeNode *t)
       switch(t->kind.decl)
       {
       case VarDeclK:
-        registerSymbol(t);
+        registerSymbol(t, Variable, FALSE, t->child[0]->type);
         insertNode(t->child[0]);
         break;
       case ArrDeclK:
-        registerSymbol(t);
+        registerSymbol(t, Variable, TRUE, t->child[0]->type);
         insertNode(t->child[0]);
         insertNode(t->child[1]);
         break;
       case FunDeclK:
         flag_functionDeclared = 1;
-        registerSymbol(t);
+        registerSymbol(t, Function, FALSE, t->child[0]->type);
         incrementScope();
         insertNode(t->child[0]);
         insertNode(t->child[1]);
@@ -152,11 +152,11 @@ static void insertNode(TreeNode *t)
       switch (t->kind.param)
       {
       case VarParamK:
-        registerSymbol(t);
+        registerSymbol(t, Parameter, FALSE, t->child[0]->type);
         insertNode(t->child[0]);
         break;
       case ArrParamK:
-        registerSymbol(t);
+        registerSymbol(t, Parameter, TRUE, t->child[0]->type);
         insertNode(t->child[0]);
         break;
       case VoidParamK:
@@ -198,9 +198,10 @@ static void checkNode(TreeNode *t)
       t->type = Integer;
       break;
     case ConstK:
+      t->type = Integer;
     case VarK:
     case ArrK:
-//      t->type = Integer;
+//      t->type = t->child[0]->type;
       break;
     default:
       break;

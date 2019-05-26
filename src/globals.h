@@ -100,6 +100,13 @@ typedef enum
    Integer
 } ExpType;
 
+typedef enum
+{
+   Variable,
+   Parameter,
+   Function
+} SymbolClass;
+
 enum { MAXCHILDREN = 3 };
 
 typedef struct treeNode

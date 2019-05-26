@@ -45,6 +45,10 @@ typedef struct BucketListRec
   char *name;
   LineList lines;
   int memloc; /* memory location for variable */
+  SymbolClass symbol_class;
+  int is_array;
+  int array_size;
+  ExpType type;
   struct BucketListRec *next;
 } * BucketList;
 
@@ -78,7 +82,7 @@ void incrementScope();
 void decrementScope();
 
 /* Attempts to register symbol name. return 1 for success, 0 for failure. */
-int registerSymbol(TreeNode *t);
+int registerSymbol(TreeNode *t, SymbolClass symbol_class, int is_array, ExpType type);
 
 /* Attempts to reference symbol name. return 1 for success, 0 for failure. */
 int referenceSymbol(TreeNode *t);

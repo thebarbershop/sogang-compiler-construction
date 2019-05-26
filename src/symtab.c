@@ -55,7 +55,7 @@ static SymbolTable globalSymbolTable, currentScopeSymbolTable;
  * loc = memory location is inserted only the
  * first time, otherwise ignored
  */
-static void st_insert(char *name, int lineno, int loc)
+static BucketList st_insert(char *name, int lineno, int loc)
 {
   int h = hash(name);
   BucketList l = currentScopeSymbolTable->hashTable[h];
@@ -78,13 +78,14 @@ static void st_insert(char *name, int lineno, int loc)
     while (t->next != NULL)
     {
       if (t->lineno == lineno)
-        return; /* skip if lineno is already there */
+        return l; /* skip if lineno is already there */
       t = t->next;
     }
     t->next = malloc(sizeof(struct LineListRec));
     t->next->lineno = lineno;
     t->next->next = NULL;
   }
+  return l;
 } /* st_insert */
 
 /* Attempts to reference symbol name. return 1 for success, 0 for failure. */
@@ -111,9 +112,11 @@ int referenceSymbol(TreeNode *t)
   return 0;
 }
 
-/* Attempts to register symbol name. return 1 for success, 0 for failure. */
-int registerSymbol(TreeNode *t) {
+const char* const symbol_class_string[] = {"Variable", "Parameter", "Function"};
+const char* const exp_type_string[] = {"void", "int"};
 
+/* Attempts to register symbol name. return 1 for success, 0 for failure. */
+int registerSymbol(TreeNode *t, SymbolClass symbol_class, int is_array, ExpType type) {
   int h = hash(t->attr.name);
   BucketList l = currentScopeSymbolTable->hashTable[h];
   while ((l != NULL) && (strcmp(t->attr.name, l->name) != 0))
@@ -121,7 +124,12 @@ int registerSymbol(TreeNode *t) {
 
   if (l == NULL)
   { /* The symbol is not found in current scope. */
-    st_insert(t->attr.name, t->lineno, currentScopeSymbolTable->location++);
+    BucketList symbol = st_insert(t->attr.name, t->lineno, currentScopeSymbolTable->location++);
+    symbol->symbol_class = symbol_class;
+    symbol->is_array = is_array;
+    symbol->type = type;
+    if(is_array && symbol_class == Variable)
+      symbol->array_size = t->child[1]->attr.val;
     if (t->nodekind == DeclK && t->kind.decl == ArrDeclK)
     {
       currentScopeSymbolTable->location += (t->child[1]->attr.val-1);
@@ -144,8 +152,8 @@ int registerSymbol(TreeNode *t) {
 void printSymTab(FILE *listing)
 { 
   int i;
-  fprintf(listing, "Variable Name  Scope  Location   Line Numbers\n");
-  fprintf(listing, "-------------  -----  --------   ------------\n");
+  fprintf(listing, "Symbol Name  Scope  Location  Symbol Class  Array?  Array Size  Expression Type  Line Numbers\n");
+  fprintf(listing, "-----------  -----  --------  ------------  ------  ----------  ---------------  ------------\n");
   for (i = 0; i < HASHTABLE_SIZE; ++i)
   {
     if (currentScopeSymbolTable->hashTable[i] != NULL)
@@ -154,9 +162,16 @@ void printSymTab(FILE *listing)
       while (l != NULL)
       {
         LineList t = l->lines;
-        fprintf(listing, "%-14s ", l->name);
-        fprintf(listing, "%-5d ", currentScopeSymbolTable->depth);
-        fprintf(listing, "%-8d  ", l->memloc);
+        fprintf(listing, "%-12s ", l->name);
+        fprintf(listing, "%-6d ", currentScopeSymbolTable->depth);
+        fprintf(listing, "%-9d ", l->memloc);
+        fprintf(listing, "%-13s ", symbol_class_string[l->symbol_class]);
+        fprintf(listing, "%-7s ", l->is_array?"Y":"N");
+        if (l->is_array)
+          fprintf(listing, "%-11d ", l->array_size);
+        else
+          fprintf(listing, "%-11s ", "-");
+        fprintf(listing, "%-16s ", exp_type_string[l->type]);
         while (t != NULL)
         {
           fprintf(listing, "%4d ", t->lineno);
