@@ -11,7 +11,7 @@ BISONC=y.tab.c
 BISONH=y.tab.h
 BISONOUTPUT=y.output
 
-SRCS=main.c util.c $(FLEXC) $(BISONC)
+SRCS=main.c util.c symtab.c analyze.c $(FLEXC) $(BISONC)
 OBJS=$(SRCS:.c=.o)
 
 20120085: $(FLEXC) $(BISONC) $(OBJS)
