@@ -69,9 +69,8 @@ int main(int argc, char *argv[])
   listing = stdout; /* send listing to screen */
   if(TraceScan) {
     fprintf(listing, "\tline number\ttoken\t\tlexeme\n");
-    for(i = 0; i < 54; i++) {
+    for(i = 0; i < 54; i++)
       fputc('-', listing);
-    }
     fputc('\n', listing);
   }
 #if NO_PARSE
@@ -94,10 +93,11 @@ int main(int argc, char *argv[])
 
     }
     buildSymtab(syntaxTree);
-    if(TraceAnalyze && !Error) {
-      fprintf(listing, "Performing TypeCheck..\n");
+    if(!Error) {
+      if(TraceAnalyze)
+        fprintf(listing, "Performing TypeCheck..\n");
+      typeCheck(syntaxTree);
     }
-    typeCheck(syntaxTree);
   }
 #if !NO_CODE
   if (!Error)
