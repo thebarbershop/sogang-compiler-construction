@@ -116,6 +116,7 @@ int main(int argc, char *argv[])
 #endif
 #endif
 #endif
+  /* TODO: delete syntaxTree */
   fclose(source);
   return 0;
 }
