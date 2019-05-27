@@ -72,8 +72,6 @@ void printToken(TokenType token, const char *tokenString)
   case ID:
     fprintf(listing, "\t\tID\t\t%s\n", tokenString);
     break;
-  default: /* should never happen */
-    fprintf(listing, "Unknown token: %d from \"%s\" at line %d\n", token, tokenString, lineno);
   }
 }
 
@@ -244,9 +242,6 @@ void printTree(TreeNode *tree)
       case ReturnK:
         fprintf(listing, "Return Statement\n");
         break;
-      default:
-        fprintf(listing, "Unknown StmtNode kind\n");
-        break;
       }
     }
     else if (tree->nodekind == ExpK)
@@ -271,9 +266,6 @@ void printTree(TreeNode *tree)
       case CallK:
         fprintf(listing, "Calling: %s\n", tree->attr.name);
         break;
-      default:
-        fprintf(listing, "Unknown ExpNode kind\n");
-        break;
       }
     }
     else if (tree->nodekind == DeclK)
@@ -288,9 +280,6 @@ void printTree(TreeNode *tree)
         break;
       case FunDeclK:
         fprintf(listing, "Function Declaration: %s\n", tree->attr.name);
-        break;
-      default:
-        fprintf(listing, "Unknown DeclNode kind\n");
         break;
       }
     }
@@ -308,9 +297,6 @@ void printTree(TreeNode *tree)
         }
         fprintf(listing, "Type: %s\n", type);
         break;
-      default:
-        fprintf(listing, "Unknown TypeNode kind\n");
-        break;
       }
     }
     else if (tree->nodekind == ParamK)
@@ -325,9 +311,6 @@ void printTree(TreeNode *tree)
         break;
       case VoidParamK:
         fprintf(listing, "Parameter: void\n");
-        break;
-      default:
-        fprintf(listing, "Unknown ParameterNode kind\n");
         break;
       }
     }
@@ -361,6 +344,6 @@ char *getOp(TokenType op) {
     case GTE:   return ">=";    
     case EQ:    return "==";
     case NEQ:   return "!=";
-    default:    return ""  ;
   }
+  return "";
 }
