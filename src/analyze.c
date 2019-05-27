@@ -176,9 +176,7 @@ void buildSymtab(TreeNode *syntaxTree)
   initSymTab();
   insertNode(syntaxTree);
   if (TraceAnalyze)
-  {
     printSymTab(listing);
-  }
 }
 
 /* Procedure checkNode performs
