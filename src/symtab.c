@@ -228,3 +228,7 @@ void decrementScope(void)
 {
   currentScopeSymbolTable = currentScopeSymbolTable->prev;
 }
+
+int isGlobalScope(void) {
+  return (currentScopeSymbolTable->depth == 0);
+}

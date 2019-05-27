@@ -17,8 +17,16 @@ static void typeError(TreeNode *t, const char *message)
   Error = TRUE;
 }
 
+static void semanticError(TreeNode *t, const char *message)
+{
+  fprintf(listing, "Semantic error at line %d: %s\n", t->lineno, message);
+  Error = TRUE;
+}
+
 static int flag_functionDeclared = FALSE;
 static int flag_callArguments = FALSE;
+static int flag_mainDeclared = FALSE;
+static ExpType type_currentFunction;
 /* Procedure insertNode inserts 
  * identifiers stored in t into 
  * the symbol table 
@@ -131,6 +139,7 @@ static void insertNode(TreeNode *t)
         insertNode(t->child[2]);
         decrementScope();
         flag_functionDeclared = 0;
+
         break;
       }
     case TypeK:
@@ -210,8 +219,8 @@ static void checkNode(TreeNode *t)
         break;
       case ReturnK:
         checkNode(t->child[0]);
-        if (t->child[0]->type != Integer)
-          typeError(t->child[0], "Return value is not int");
+        if (t->child[0]->type != type_currentFunction)
+          typeError(t->child[0], "Return value does not match function type");
         break;
       }
       break;
@@ -223,6 +232,7 @@ static void checkNode(TreeNode *t)
         checkNode(t->child[1]);
         if (t->child[0]->type != t->child[1]->type)
           typeError(t->child[1], "Assign type does not match");
+        t->type = t->child[0]->type;
         break;
       case OpK:
         checkNode(t->child[0]);
@@ -239,16 +249,19 @@ static void checkNode(TreeNode *t)
         break;
       case ArrK:
         checkNode(t->child[0]);
-        t->type = lookupSymbol(t, FALSE)->type;
         if ((t->child[0]->type != Integer))
           typeError(t, "Array index in not integer");
+        t->type = lookupSymbol(t, FALSE)->type;
         break;
       case CallK:
         checkNode(t->child[0]);
+        t->type = lookupSymbol(t, FALSE)->type;
         break;
       }
       break;
     case DeclK:
+      if(flag_mainDeclared && isGlobalScope())
+        semanticError(t, "Illegal global declaration after main function.");
       switch(t->kind.decl)
       {
       case VarDeclK:
@@ -270,6 +283,18 @@ static void checkNode(TreeNode *t)
         checkNode(t->child[2]);
         decrementScope();
         flag_functionDeclared = 0;
+
+        type_currentFunction = t->child[0]->type;
+
+        /* Sematic checks of main function */
+        if(!strcmp(t->attr.name, "main")) {
+          flag_mainDeclared = TRUE;
+          if(t->child[0]->type != Void)
+            semanticError(t, "main function must be void type.");
+          if(t->child[1]->kind.param != VoidParamK)
+            semanticError(t, "main function should not take any parameters.");
+        }
+
         break;
       }
     case TypeK:

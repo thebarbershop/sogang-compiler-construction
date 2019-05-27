@@ -45,4 +45,7 @@ int registerSymbol(TreeNode *t, SymbolClass symbol_class, int is_array, ExpType 
 /* Attempts to lookup symbol from table. Return table entry or NULL. */
 BucketList lookupSymbol(TreeNode *t, int reference);
 
+/* Return if the current scope is global. */
+int isGlobalScope(void);
+
 #endif
