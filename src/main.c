@@ -6,7 +6,7 @@
 /* Modified by Eom Taegyung                         */
 /****************************************************/
 
-#include "globals.h" 
+#include "globals.h"  
 #include "util.h"
 #include <assert.h>
 
@@ -21,7 +21,7 @@
 #define NO_CODE TRUE
 
 #if NO_PARSE
-#else
+#else 
 #include "y.tab.h"
 #if !NO_ANALYZE
 #include "analyze.h"
@@ -87,18 +87,14 @@ int main(int argc, char *argv[])
   if (!Error)
   {
     if(TraceAnalyze) {
-      fprintf(listing, "Building Symbol Tree..\n\n");
       fprintf(listing, "Symbol Name  Scope  Location  Symbol Class  Array?  Array Size  Expression Type  Line Numbers\n");
       fprintf(listing, "---------------------------------------------------------------------------------------------\n");
 
     }
     buildSymtab(syntaxTree);
-    if(!Error) {
-      if(TraceAnalyze)
-        fprintf(listing, "Performing TypeCheck..\n");
-      typeCheck(syntaxTree);
-    }
   }
+  if(!Error)
+      typeCheck(syntaxTree);
 #if !NO_CODE
   if (!Error)
   {
