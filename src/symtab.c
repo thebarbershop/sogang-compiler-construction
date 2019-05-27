@@ -152,8 +152,6 @@ int registerSymbol(TreeNode *t, SymbolClass symbol_class, int is_array, ExpType 
 void printSymTab(FILE *listing)
 { 
   int i;
-  fprintf(listing, "Symbol Name  Scope  Location  Symbol Class  Array?  Array Size  Expression Type  Line Numbers\n");
-  fprintf(listing, "---------------------------------------------------------------------------------------------\n");
   for (i = 0; i < HASHTABLE_SIZE; ++i)
   {
     if (currentScopeSymbolTable->hashTable[i] != NULL)
@@ -182,7 +180,6 @@ void printSymTab(FILE *listing)
       }
     }
   }
-  fprintf(listing, "\n");
 } /* printSymTab */
 
 /* Initializes the global static variable globalSymbolTable */

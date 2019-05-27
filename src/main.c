@@ -88,7 +88,10 @@ int main(int argc, char *argv[])
   if (!Error)
   {
     if(TraceAnalyze) {
-      fprintf(listing, "Building Symbol Tree..\n");
+      fprintf(listing, "Building Symbol Tree..\n\n");
+      fprintf(listing, "Symbol Name  Scope  Location  Symbol Class  Array?  Array Size  Expression Type  Line Numbers\n");
+      fprintf(listing, "---------------------------------------------------------------------------------------------\n");
+
     }
     buildSymtab(syntaxTree);
     if(TraceAnalyze && !Error) {
