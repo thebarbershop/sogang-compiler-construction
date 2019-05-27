@@ -214,11 +214,7 @@ iteration_stmt      : WHILE LPAREN expression RPAREN statement
                             $$->child[1] = $5;
                         }
                     ;
-return_stmt         : RETURN SEMI
-                        {
-                            $$ = newStmtNode(ReturnK);
-                        }
-                    | RETURN expression SEMI
+return_stmt         : RETURN expression SEMI
                         {
                             $$ = newStmtNode(ReturnK);
                             $$->child[0] = $2;
