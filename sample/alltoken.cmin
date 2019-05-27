@@ -12,6 +12,10 @@ int mod(int x, int y) {
     /* return x mod y */
     return x-x/y*y;
 }
+
+void output(int i) {
+    ;
+}
 void main(void) {
     int i;
     int arr[100];
