@@ -86,15 +86,16 @@ int main(int argc, char *argv[])
 #if !NO_ANALYZE
   if (!Error)
   {
-    if(TraceAnalyze) {
-      fprintf(listing, "Symbol Name  Scope  Location  Symbol Class  Array?  Array Size  Expression Type  Line Numbers\n");
-      fprintf(listing, "---------------------------------------------------------------------------------------------\n");
-
-    }
+    if(TraceAnalyze)
+      fprintf(listing, "Building Symbol Tree..\n\n");
     buildSymtab(syntaxTree);
   }
   if(!Error)
+  {
+      fprintf(listing, "Performing Type Check..\n");
       typeCheck(syntaxTree);
+      fprintf(listing, "Finished Type Check\n");
+  }
 #if !NO_CODE
   if (!Error)
   {
