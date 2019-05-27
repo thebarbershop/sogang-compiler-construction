@@ -70,7 +70,7 @@ static void insertNode(TreeNode *t)
           int scope_incremented = 0;
           if(!flag_functionDeclared)
           {
-            incrementScope();
+            incrementScope(FALSE);
             scope_incremented = 1;
           }
           else
@@ -138,7 +138,7 @@ static void insertNode(TreeNode *t)
       case FunDeclK:
         flag_functionDeclared = 1;
         registerSymbol(t, Function, FALSE, t->child[0]->type);
-        incrementScope();
+        incrementScope(TRUE);
         insertNode(t->child[0]);
         insertNode(t->child[1]);
         insertNode(t->child[2]);

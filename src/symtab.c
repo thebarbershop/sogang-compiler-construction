@@ -153,7 +153,7 @@ void printSymTab(FILE *listing)
 { 
   int i;
   fprintf(listing, "Symbol Name  Scope  Location  Symbol Class  Array?  Array Size  Expression Type  Line Numbers\n");
-  fprintf(listing, "-----------  -----  --------  ------------  ------  ----------  ---------------  ------------\n");
+  fprintf(listing, "---------------------------------------------------------------------------------------------\n");
   for (i = 0; i < HASHTABLE_SIZE; ++i)
   {
     if (currentScopeSymbolTable->hashTable[i] != NULL)
@@ -198,12 +198,13 @@ void initSymTab()
 }
 
 /* increment current scope */
-void incrementScope()
+void incrementScope(int reset_location)
 {
   currentScopeSymbolTable->next = malloc(sizeof(struct SymbolTableRec));
   currentScopeSymbolTable->next->depth = currentScopeSymbolTable->depth + 1;
   currentScopeSymbolTable->next->prev = currentScopeSymbolTable;
   currentScopeSymbolTable->next->next = NULL;
+  currentScopeSymbolTable->next->location = reset_location?0:currentScopeSymbolTable->location;
   for(int i = 0; i < HASHTABLE_SIZE; ++i)
     currentScopeSymbolTable->next->hashTable[i] = NULL;
   currentScopeSymbolTable = currentScopeSymbolTable->next;
