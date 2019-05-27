@@ -17,41 +17,6 @@ static void typeError(TreeNode *t, const char *message)
   Error = TRUE;
 }
 
-/* Procedure traverse is a generic recursive 
- * syntax tree traversal routine:
- * it applies preProc in preorder and postProc 
- * in postorder to tree pointed to by t
- */
-static void traverse(TreeNode *t,
-                     void (*preProc)(TreeNode *),
-                     void (*postProc)(TreeNode *))
-{
-  if (t != NULL)
-  {
-    preProc(t);
-    {
-      int i;
-      for (i = 0; i < MAXCHILDREN; i++) {
-        traverse(t->child[i], preProc, postProc);
-      }
-    }
-    postProc(t);
-    traverse(t->sibling, preProc, postProc);
-  }
-}
-
-/* nullProc is a do-nothing procedure to 
- * generate preorder-only or postorder-only
- * traversals from traverse
- */
-static void nullProc(TreeNode *t)
-{
-  if (t == NULL)
-    return;
-  else
-    return;
-}
-
 static int flag_functionDeclared = 0;
 /* Procedure insertNode inserts 
  * identifiers stored in t into 
@@ -59,7 +24,8 @@ static int flag_functionDeclared = 0;
  */
 static void insertNode(TreeNode *t)
 {
-  while(t) {
+  while(t)
+  {
     switch (t->nodekind)
     {
     case StmtK:
@@ -70,7 +36,7 @@ static void insertNode(TreeNode *t)
           int scope_incremented = 0;
           if(!flag_functionDeclared)
           {
-            incrementScope(FALSE);
+            incrementScope(t, FALSE);
             scope_incremented = 1;
           }
           else
@@ -138,7 +104,7 @@ static void insertNode(TreeNode *t)
       case FunDeclK:
         flag_functionDeclared = 1;
         registerSymbol(t, Function, FALSE, t->child[0]->type);
-        incrementScope(TRUE);
+        incrementScope(t, TRUE);
         insertNode(t->child[0]);
         insertNode(t->child[1]);
         insertNode(t->child[2]);
@@ -184,52 +150,120 @@ void buildSymtab(TreeNode *syntaxTree)
  */
 static void checkNode(TreeNode *t)
 {
-  switch (t->nodekind)
+  while(t)
   {
-  case ExpK:
-    switch (t->kind.exp)
+    switch (t->nodekind)
     {
-    case OpK:
-      if ((t->child[0]->type != Integer) ||
-          (t->child[1]->type != Integer))
-        typeError(t, "Op applied to non-integer");
-      t->type = Integer;
+    case StmtK:
+      switch (t->kind.stmt)
+      {
+      case CompoundK:
+      {
+        int scope_incremented = 0;
+        if(!flag_functionDeclared)
+        {
+          incrementScope(t, FALSE);
+          scope_incremented = 1;
+        }
+        else
+          flag_functionDeclared = 0;
+
+        checkNode(t->child[0]);
+        checkNode(t->child[1]);
+        if(scope_incremented)
+          decrementScope();
+        break;
+      }
+      case SelectionK:
+        checkNode(t->child[0]);
+        checkNode(t->child[1]);
+        checkNode(t->child[2]);
+        if (t->child[0]->type != Integer)
+          typeError(t->child[0], "If-condition is not int");
+        break;
+      case IterationK:
+        checkNode(t->child[0]);
+        checkNode(t->child[1]);
+        if (t->child[0]->type != Integer)
+          typeError(t->child[0], "While-condition is not int");
+        break;
+      case ReturnK:
+        checkNode(t->child[0]);
+        if (t->child[0]->type != Integer)
+          typeError(t->child[0], "Return value is not int");
+        break;
+      }
       break;
-    case ConstK:
-      t->type = Integer;
-    case VarK:
-    case ArrK:
-//      t->type = t->child[0]->type;
+    case ExpK:
+      switch (t->kind.exp)
+      {
+      case AssignK:
+        checkNode(t->child[0]);
+        checkNode(t->child[1]);
+        if (t->child[0]->type != t->child[1]->type)
+          typeError(t->child[1], "Assign type does not match");
+        break;
+      case OpK:
+        checkNode(t->child[0]);
+        checkNode(t->child[1]);
+        if ((t->child[0]->type != Integer) || (t->child[1]->type != Integer))
+          typeError(t, "Op applied to non-integer");
+        t->type = Integer;
+        break;
+      case ConstK:
+        t->type = Integer;
+        break;
+      case VarK:
+        t->type = lookupSymbol(t->attr.name)->type;
+        break;
+      case ArrK:
+        checkNode(t->child[0]);
+        t->type = lookupSymbol(t->attr.name)->type;
+        if ((t->child[0]->type != Integer))
+          typeError(t, "Array index in not integer");
+        break;
+      case CallK:
+        checkNode(t->child[0]);
+        break;
+      }
       break;
-    default:
+    case DeclK:
+      switch(t->kind.decl)
+      {
+      case VarDeclK:
+        checkNode(t->child[0]);
+        break;
+      case ArrDeclK:
+        checkNode(t->child[0]);
+        checkNode(t->child[1]);
+        break;
+      case FunDeclK:
+        flag_functionDeclared = 1;
+        incrementScope(t, TRUE);
+        checkNode(t->child[0]);
+        checkNode(t->child[1]);
+        checkNode(t->child[2]);
+        decrementScope();
+        flag_functionDeclared = 0;
+        break;
+      }
+    case TypeK:
+      break;
+    case ParamK:
+      switch (t->kind.param)
+      {
+      case VarParamK:
+        checkNode(t->child[0]);
+        break;
+      case ArrParamK:
+        checkNode(t->child[0]);
+        break;
+      case VoidParamK:
+        break;
+      }
       break;
     }
-    break;
-  case StmtK:
-    switch (t->kind.stmt)
-    {
-    case SelectionK:
-      if (t->child[0]->type != Integer)
-        typeError(t->child[0], "if condition is not Integer");
-      break;
-    case IterationK:
-      if (t->child[0]->type != Integer)
-        typeError(t->child[0], "while condition is not Integer");
-      break;
-    case ReturnK:
-      if (t->child[0]->type != Integer)
-        typeError(t->child[0], "return value is not Integer");
-      break;
-    case AssignK:
-      if (t->child[0]->type != t->child[1]->type)
-        typeError(t->child[1], "assign type does not match");
-      break;
-    default:
-      break;
-    }
-    break;
-  default:
-    break;
+    t = t->sibling;
   }
 }
 
@@ -238,5 +272,5 @@ static void checkNode(TreeNode *t)
  */
 void typeCheck(TreeNode *syntaxTree)
 {
-  traverse(syntaxTree, nullProc, checkNode);
+  checkNode(syntaxTree);
 }

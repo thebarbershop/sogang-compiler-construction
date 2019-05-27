@@ -12,59 +12,12 @@
 
 #include "globals.h"
 
-/* SIZE is the size of the hash table */
-enum
-{
-  HASHTABLE_SIZE = 211
-};
-
 /* SHIFT is the power of two used as multiplier
    in hash function  */
 enum
 {
   HASH_SHIFT = 4
 };
-
-/* the list of line numbers of the source 
- * code in which a variable is referenced
- */
-typedef struct LineListRec
-{
-  int lineno;
-  struct LineListRec *next;
-} * LineList;
-
-/* The record in the bucket lists for
- * each variable, including name, 
- * assigned memory location, and
- * the list of line numbers in which
- * it appears in the source code
- */
-typedef struct BucketListRec
-{
-  char *name;
-  LineList lines;
-  int memloc; /* memory location for variable */
-  SymbolClass symbol_class;
-  int is_array;
-  int array_size;
-  ExpType type;
-  struct BucketListRec *next;
-} * BucketList;
-
-/* Each scope has its own hash table.
- * The whole symbol table is managed as
- * a doubly linked list of scope-wide hash tables.
- */
-typedef struct SymbolTableRec
-{
-  int depth; /* global scope is of depth 0,
-              * and each compound statement increses depth by 1
-              */
-  BucketList hashTable[HASHTABLE_SIZE];
-  struct SymbolTableRec *prev, *next;
-  int location; /* memory location index */
-} * SymbolTable;
 
 /* Procedure printSymTab prints a formatted 
  * listing of the symbol table contents 
@@ -73,18 +26,21 @@ typedef struct SymbolTableRec
 void printSymTab(FILE *listing);
 
 /* Initializes the global static variable globalSymbolTable */
-void initSymTab();
+void initSymTab(void);
 
 /* increment current scope */
-void incrementScope();
+void incrementScope(TreeNode *t, int reset_location);
 
 /* decrement scope */
-void decrementScope();
+void decrementScope(void);
 
 /* Attempts to register symbol name. return 1 for success, 0 for failure. */
 int registerSymbol(TreeNode *t, SymbolClass symbol_class, int is_array, ExpType type);
 
 /* Attempts to reference symbol name. return 1 for success, 0 for failure. */
 int referenceSymbol(TreeNode *t);
+
+/* Attempts to lookup symbol from table. Return table entry or NULL. */
+BucketList lookupSymbol(const char *name);
 
 #endif

@@ -107,6 +107,51 @@ typedef enum
    Function
 } SymbolClass;
 
+
+/* SIZE is the size of the hash table */
+enum { HASHTABLE_SIZE = 211 };
+
+/* the list of line numbers of the source 
+ * code in which a variable is referenced
+ */
+typedef struct LineListRec
+{
+  int lineno;
+  struct LineListRec *next;
+} * LineList;
+
+/* The record in the bucket lists for
+ * each variable, including name, 
+ * assigned memory location, and
+ * the list of line numbers in which
+ * it appears in the source code
+ */
+typedef struct BucketListRec
+{
+  char *name;
+  LineList lines;
+  int memloc; /* memory location for variable */
+  SymbolClass symbol_class;
+  int is_array;
+  int array_size;
+  ExpType type;
+  struct BucketListRec *next;
+} * BucketList;
+
+/* Each scope has its own hash table.
+ * The whole symbol table is managed as
+ * a doubly linked list of scope-wide hash tables.
+ */
+typedef struct SymbolTableRec
+{
+  int depth; /* global scope is of depth 0,
+              * and each compound statement increses depth by 1
+              */
+  BucketList hashTable[HASHTABLE_SIZE];
+  struct SymbolTableRec *prev, *next;
+  int location; /* memory location index */
+} * SymbolTable;
+
 enum { MAXCHILDREN = 3 };
 
 typedef struct treeNode
@@ -128,6 +173,7 @@ typedef struct treeNode
       char *name;          /* for variable */
    } attr;
    ExpType type; /* for type checking of exps */
+   SymbolTable scopeSymbolTable; /* Only for scope-makers (FunDeclK, CompoundK) */
 } TreeNode;
 
 /**************************************************/
