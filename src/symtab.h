@@ -19,6 +19,11 @@ enum
   HASH_SHIFT = 4
 };
 
+enum
+{
+  WORD_SIZE = 4
+};
+
 /* Procedure printSymTab prints a formatted 
  * listing of the symbol table contents 
  * to the listing file
@@ -29,7 +34,7 @@ void printSymTab(FILE *listing);
 void initSymTab(void);
 
 /* increment current scope */
-void incrementScope(TreeNode *t, int reset_location);
+void incrementScope(TreeNode *t);
 
 /* decrement scope */
 void decrementScope(void);
@@ -37,10 +42,7 @@ void decrementScope(void);
 /* Attempts to register symbol name. return 1 for success, 0 for failure. */
 int registerSymbol(TreeNode *t, SymbolClass symbol_class, int is_array, ExpType type);
 
-/* Attempts to reference symbol name. return 1 for success, 0 for failure. */
-int referenceSymbol(TreeNode *t);
-
 /* Attempts to lookup symbol from table. Return table entry or NULL. */
-BucketList lookupSymbol(const char *name);
+BucketList lookupSymbol(TreeNode *t, int reference);
 
 #endif

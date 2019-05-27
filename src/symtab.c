@@ -90,8 +90,8 @@ static BucketList st_insert(char *name, int lineno, int loc)
   return l;
 } /* st_insert */
 
-/* Attempts to reference symbol name. return 1 for success, 0 for failure. */
-int referenceSymbol(TreeNode *t)
+/* Look up symbol name. return table entry or NULL. */
+BucketList lookupSymbol(TreeNode *t, int reference)
 {
   SymbolTable original_currentScopeSymbolTable = currentScopeSymbolTable;
   int h = hash(t->attr.name);
@@ -105,34 +105,13 @@ int referenceSymbol(TreeNode *t)
       currentScopeSymbolTable = currentScopeSymbolTable->prev;
     else
     {
-      st_insert(t->attr.name, t->lineno, 0);
-      currentScopeSymbolTable = original_currentScopeSymbolTable;
-      return 1;
-    }
-  }
-  scopeError(t, "used without declaration");
-  return 0;
-}
-
-/* Attempts to lookup symbol from table. Return table entry or NULL. */
-BucketList lookupSymbol(const char * name)
-{
-  SymbolTable original_currentScopeSymbolTable = currentScopeSymbolTable;
-  int h = hash(name);
-  while(currentScopeSymbolTable)
-  {
-    BucketList l = currentScopeSymbolTable->hashTable[h];
-    while ((l != NULL) && (strcmp(name, l->name) != 0))
-      l = l->next;
-
-    if (l == NULL)
-      currentScopeSymbolTable = currentScopeSymbolTable->prev;
-    else
-    {
+      if (reference)
+        st_insert(t->attr.name, t->lineno, 0);
       currentScopeSymbolTable = original_currentScopeSymbolTable;
       return l;
     }
   }
+  scopeError(t, "used without declaration");
   return NULL;
 }
 
@@ -141,6 +120,8 @@ const char* const exp_type_string[] = {"void", "int"};
 
 /* Attempts to register symbol name. return 1 for success, 0 for failure. */
 int registerSymbol(TreeNode *t, SymbolClass symbol_class, int is_array, ExpType type) {
+  int memloc_coeff = (t->nodekind == ParamK)?1:-1; /* positive offset for parameters; negative otherwise */
+  
   int h = hash(t->attr.name);
   BucketList l = currentScopeSymbolTable->hashTable[h];
   while ((l != NULL) && (strcmp(t->attr.name, l->name) != 0))
@@ -148,7 +129,8 @@ int registerSymbol(TreeNode *t, SymbolClass symbol_class, int is_array, ExpType 
 
   if (l == NULL)
   { /* The symbol is not found in current scope. */
-    BucketList symbol = st_insert(t->attr.name, t->lineno, currentScopeSymbolTable->location++);
+    BucketList symbol = st_insert(t->attr.name, t->lineno, currentScopeSymbolTable->location);
+    currentScopeSymbolTable->location += memloc_coeff*WORD_SIZE;
     symbol->symbol_class = symbol_class;
     symbol->is_array = is_array;
     symbol->type = type;
@@ -156,7 +138,7 @@ int registerSymbol(TreeNode *t, SymbolClass symbol_class, int is_array, ExpType 
       symbol->array_size = t->child[1]->attr.val;
     if (t->nodekind == DeclK && t->kind.decl == ArrDeclK)
     {
-      currentScopeSymbolTable->location += (t->child[1]->attr.val-1);
+      currentScopeSymbolTable->location += memloc_coeff*WORD_SIZE*(t->child[1]->attr.val-1);
     }
     return 1;
   }
@@ -176,8 +158,8 @@ int registerSymbol(TreeNode *t, SymbolClass symbol_class, int is_array, ExpType 
 void printSymTab(FILE *listing)
 { 
   int i;
-  fprintf(listing, "Symbol Name  Scope  Location  Symbol Class  Array?  Array Size  Expression Type  Line Numbers\n");
-  fprintf(listing, "---------------------------------------------------------------------------------------------\n");
+  fprintf(listing, "Symbol Name  Scope  Location  Symbol Class  Array?  Array Size  Type  Line Numbers\n");
+  fprintf(listing, "----------------------------------------------------------------------------------\n");
   for (i = 0; i < HASHTABLE_SIZE; ++i)
   {
     if (currentScopeSymbolTable->hashTable[i] != NULL)
@@ -195,7 +177,7 @@ void printSymTab(FILE *listing)
           fprintf(listing, "%-11d ", l->array_size);
         else
           fprintf(listing, "%-11s ", "-");
-        fprintf(listing, "%-16s ", exp_type_string[l->type]);
+        fprintf(listing, "%-5s ", exp_type_string[l->type]);
         while (t != NULL)
         {
           fprintf(listing, "%4d ", t->lineno);
@@ -222,14 +204,16 @@ void initSymTab(void)
 }
 
 /* increment current scope */
-void incrementScope(TreeNode *t, int reset_location)
+void incrementScope(TreeNode *t)
 {
   if(t->scopeSymbolTable == NULL) {
     currentScopeSymbolTable->next = malloc(sizeof(struct SymbolTableRec));
     currentScopeSymbolTable->next->depth = currentScopeSymbolTable->depth + 1;
     currentScopeSymbolTable->next->prev = currentScopeSymbolTable;
     currentScopeSymbolTable->next->next = NULL;
-    currentScopeSymbolTable->next->location = reset_location?0:currentScopeSymbolTable->location;
+    currentScopeSymbolTable->next->location = currentScopeSymbolTable->location;
+
+    /* Reset location offset for function declaration */
     for(int i = 0; i < HASHTABLE_SIZE; ++i)
       currentScopeSymbolTable->next->hashTable[i] = NULL;
     currentScopeSymbolTable = currentScopeSymbolTable->next;
