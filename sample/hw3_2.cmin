@@ -1,21 +1,7 @@
 int glo;
-int arr[10];
-int c;
-
-int f(int a, int b[]) {
-    int d;
-    d = a+b[0];
-    if(d == 0) {
-        int e;
-        e = a + b[1];
-        d = e;
-    }
-    return d;
-}
 
 void main(void) {
     int locA;
-    int locC;
     {
         int locB;
         locA = 1;
