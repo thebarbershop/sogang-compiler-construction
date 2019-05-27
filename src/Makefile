@@ -4,6 +4,7 @@ CFLAGS=-std=c11 -Wall -Werror -O3 -Wpedantic
 
 .SUFFIXES: .c .o
 
+BINARY=project3_17
 FLEXRAW=cm.l
 FLEXC=lex.yy.c
 BISONRAW=cm.y
@@ -14,7 +15,7 @@ BISONOUTPUT=y.output
 SRCS=main.c util.c symtab.c analyze.c $(FLEXC) $(BISONC)
 OBJS=$(SRCS:.c=.o)
 
-20120085: $(FLEXC) $(BISONC) $(OBJS)
+$(BINARY): $(FLEXC) $(BISONC) $(OBJS)
 	$(CC) -o $@ $(OBJS)
 
 lex.yy.c: $(FLEXRAW)
@@ -25,4 +26,4 @@ y.tab.c: $(BISONRAW)
 
 .PHONY: clean
 clean:
-	rm -f $(OBJS) 20120085 $(FLEXC) $(BISONC) $(BISONH) $(BISONOUTPUT)
+	rm -f $(OBJS) $(BINARY) $(FLEXC) $(BISONC) $(BISONH) $(BISONOUTPUT)
