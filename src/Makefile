@@ -25,4 +25,4 @@ y.tab.c: $(BISONRAW)
 
 .PHONY: clean
 clean:
-	rm -f $(OBJS) 20120085 $(FLEXC) $(BISONC) $(BISONH) $(BISONOUTPUT) stdout
+	rm -f $(OBJS) 20120085 $(FLEXC) $(BISONC) $(BISONH) $(BISONOUTPUT)
