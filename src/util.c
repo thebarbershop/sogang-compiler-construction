@@ -36,7 +36,7 @@ void printToken(TokenType token, const char *tokenString)
     {
       int i;
       fprintf(listing, "\t\t");
-      for (i = 0; tokenString[i]; i++) {
+      for (i = 0; tokenString[i]; ++i) {
         fputc(tokenString[i]-0x20, listing);
       }
       fprintf(listing, "\t\t%s\n", tokenString);
@@ -86,7 +86,7 @@ TreeNode *newStmtNode(StmtKind kind)
     fprintf(listing, "Out of memory error at line %d\n", lineno);
   else
   {
-    for (i = 0; i < MAXCHILDREN; i++)
+    for (i = 0; i < MAXCHILDREN; ++i)
       t->child[i] = NULL;
     t->sibling = NULL;
     t->nodekind = StmtK;
@@ -107,7 +107,7 @@ TreeNode *newExpNode(ExpKind kind)
     fprintf(listing, "Out of memory error at line %d\n", lineno);
   else
   {
-    for (i = 0; i < MAXCHILDREN; i++)
+    for (i = 0; i < MAXCHILDREN; ++i)
       t->child[i] = NULL;
     t->sibling = NULL;
     t->nodekind = ExpK;
@@ -129,7 +129,7 @@ TreeNode *newDeclNode(DeclKind kind)
     fprintf(listing, "Out of memory error at line %d\n", lineno);
   else
   {
-    for (i = 0; i < MAXCHILDREN; i++)
+    for (i = 0; i < MAXCHILDREN; ++i)
       t->child[i] = NULL;
     t->sibling = NULL;
     t->nodekind = DeclK;
@@ -147,7 +147,7 @@ TreeNode *newTypeNode(TypeKind kind)
     fprintf(listing, "Out of memory error at line %d\n", lineno);
   else
   {
-    for (i = 0; i < MAXCHILDREN; i++)
+    for (i = 0; i < MAXCHILDREN; ++i)
       t->child[i] = NULL;
     t->sibling = NULL;
     t->nodekind = TypeK;
@@ -165,7 +165,7 @@ TreeNode *newParamNode(ParamKind kind)
     fprintf(listing, "Out of memory error at line %d\n", lineno);
   else
   {
-    for (i = 0; i < MAXCHILDREN; i++)
+    for (i = 0; i < MAXCHILDREN; ++i)
       t->child[i] = NULL;
     t->sibling = NULL;
     t->nodekind = ParamK;
@@ -206,7 +206,7 @@ static int indentno = 0;
 static void printSpaces(void)
 {
   int i;
-  for (i = 0; i < indentno; i++)
+  for (i = 0; i < indentno; ++i)
     fprintf(listing, " ");
 }
 
@@ -316,7 +316,7 @@ void printTree(TreeNode *tree)
     }
     else
       fprintf(listing, "Unknown node kind\n");
-    for (i = 0; i < MAXCHILDREN; i++)
+    for (i = 0; i < MAXCHILDREN; ++i)
       printTree(tree->child[i]);
     tree = tree->sibling;
     if(sibling && tree == NULL){
@@ -325,7 +325,7 @@ void printTree(TreeNode *tree)
       fprintf(listing, ")\n");
     }
     if(tree!=NULL) {
-      sibling++;
+      ++sibling;
     }
   }
   UNINDENT;

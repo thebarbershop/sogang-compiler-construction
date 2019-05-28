@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
   listing = stdout; /* send listing to screen */
   if(TraceScan) {
     fprintf(listing, "\tline number\ttoken\t\tlexeme\n");
-    for(i = 0; i < 54; i++)
+    for(i = 0; i < 54; ++i)
       fputc('-', listing);
     fputc('\n', listing);
   }

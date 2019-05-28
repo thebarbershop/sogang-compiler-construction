@@ -57,7 +57,7 @@ whitespace  [ \t]+
 
 {number}        {return NUM;}
 {identifier}    {return ID;}
-{newline}       {lineno++;}
+{newline}       {++lineno;}
 {whitespace}    {/* skip whitespace */}
 
 "/*"            {BEGIN(COMMENT);}
@@ -77,7 +77,7 @@ TokenType getToken(void)
   TokenType currentToken;
   if (firstTime)
   { firstTime = FALSE;
-    lineno++;
+    ++lineno;
     yyin = source;
     yyout = listing;
   }
