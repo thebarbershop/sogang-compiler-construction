@@ -1,6 +1,13 @@
-int a;
+int x[10];
 
-void main(int arg) {
-    
-    a = a + 1;
+void main(void)
+{ int i;
+  i = 0;
+  while (i < 10)
+    { x[i] = 1;
+      i = i + 1; }
+  i = 0;
+  while (i < 10)
+    { x[i]=0;
+      i = i + 1; }
 }

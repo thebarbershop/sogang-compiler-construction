@@ -15,7 +15,7 @@ int binarySearch(int x){
     return 11111;
 }
 
-int main(void){
+void main(void){
     int i;
     int goal;
     int res;
@@ -26,5 +26,4 @@ int main(void){
     }
     goal=100;
     res = binarySearch(goal);
-    return 0;
 }
