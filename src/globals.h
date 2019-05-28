@@ -29,6 +29,10 @@ enum { ERROR = 65535 };
 #define TRUE 1
 #endif
 
+typedef struct BucketListRec * BucketList;
+typedef struct SymbolTableRec * SymbolTable;
+
+
 /* MAXRESERVED = the number of reserved words */
 enum { MAXRESERVED = 6 };
 
@@ -107,6 +111,29 @@ typedef enum
    Function
 } SymbolClass;
 
+enum { MAXCHILDREN = 3 };
+
+typedef struct treeNode
+{
+   struct treeNode *child[MAXCHILDREN];
+   struct treeNode *sibling;
+   int lineno;
+   NodeKind nodekind;
+   union {
+      StmtKind stmt;
+      ExpKind exp;
+      DeclKind decl;
+      TypeKind type;
+      ParamKind param;
+   } kind;
+   union {
+      TokenType op;        /* for operator */
+      int val;             /* for constant */
+      char *name;          /* for variable */
+   } attr;
+   ExpType type; /* for type checking of exps */
+   SymbolTable scopeSymbolTable; /* Only for scope-makers (FunDeclK, CompoundK) */
+} TreeNode;
 
 /* SIZE is the size of the hash table */
 enum { HASHTABLE_SIZE = 211 };
@@ -135,6 +162,7 @@ typedef struct BucketListRec
   int is_array;
   int array_size;
   ExpType type;
+  TreeNode *treeNode;
   struct BucketListRec *next;
 } * BucketList;
 
@@ -151,30 +179,6 @@ typedef struct SymbolTableRec
   struct SymbolTableRec *prev, *next;
   int location; /* memory location index */
 } * SymbolTable;
-
-enum { MAXCHILDREN = 3 };
-
-typedef struct treeNode
-{
-   struct treeNode *child[MAXCHILDREN];
-   struct treeNode *sibling;
-   int lineno;
-   NodeKind nodekind;
-   union {
-      StmtKind stmt;
-      ExpKind exp;
-      DeclKind decl;
-      TypeKind type;
-      ParamKind param;
-   } kind;
-   union {
-      TokenType op;        /* for operator */
-      int val;             /* for constant */
-      char *name;          /* for variable */
-   } attr;
-   ExpType type; /* for type checking of exps */
-   SymbolTable scopeSymbolTable; /* Only for scope-makers (FunDeclK, CompoundK) */
-} TreeNode;
 
 /**************************************************/
 /***********   Flags for tracing       ************/

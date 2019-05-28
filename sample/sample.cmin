@@ -1,13 +1,23 @@
-int x[10];
+/****************************************************/
+/* File: alltoken.cmin                              */
+/* Dummy C- program that uses all tokens            */
+/* defined in the langauge specifications at        */
+/* Compiler Construction: Principles and Practice   */
+/* Kenneth C. Louden, 1997, pp.491-492.             */
+/* Written by Eom Taegyung                          */
+/****************************************************/
 
-void main(void)
-{ int i;
-  i = 0;
-  while (i < 10)
-    { x[i] = 1;
-      i = i + 1; }
-  i = 0;
-  while (i < 10)
-    { x[i]=0;
-      i = i + 1; }
+
+void main(void) {
+    int i;
+    int arr[100];
+
+    {
+      int x;
+      int y;
+      {
+        int x;
+        int y;
+      }
+    }
 }

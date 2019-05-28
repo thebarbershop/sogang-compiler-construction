@@ -138,9 +138,9 @@ int registerSymbol(TreeNode *t, SymbolClass symbol_class, int is_array, ExpType 
     if(is_array && symbol_class == Variable)
       symbol->array_size = t->child[1]->attr.val;
     if (t->nodekind == DeclK && t->kind.decl == ArrDeclK)
-    {
       currentScopeSymbolTable->location += memloc_coeff*WORD_SIZE*(t->child[1]->attr.val-1);
-    }
+    if (t->nodekind == DeclK && t->kind.decl == FunDeclK)
+      symbol->treeNode = t;
     return 1;
   }
   else

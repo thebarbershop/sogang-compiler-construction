@@ -17,6 +17,12 @@ static void typeError(TreeNode *t, const char *message)
   Error = TRUE;
 }
 
+static void argumentError(TreeNode *t, const char *function_name, const char *message)
+{
+  fprintf(listing, "Argument error for function %s at line %d: %s\n", function_name, t->lineno, message);
+  Error = TRUE;
+}
+
 static void semanticError(TreeNode *t, const char *message)
 {
   fprintf(listing, "Semantic error at line %d: %s\n", t->lineno, message);
@@ -43,22 +49,24 @@ static void insertNode(TreeNode *t)
         case CompoundK:
         {
           int scope_incremented = FALSE;
+          int function_scope = TRUE;
           if(!flag_functionDeclared)
           {
             incrementScope(t);
             scope_incremented = TRUE;
+            function_scope = FALSE;
           }
+          flag_functionDeclared = FALSE;
           insertNode(t->child[0]);
           insertNode(t->child[1]);
           if(TraceAnalyze)
           {
-            if(flag_functionDeclared)
-              fprintf(listing, "\n** Symbol table for scope of function %s at line %d\n", node_currentFunction->attr.name, node_currentFunction->lineno);
+            if(function_scope)
+              fprintf(listing, "\n** Symbol table for scope of function %s declared at at line %d\n", node_currentFunction->attr.name, node_currentFunction->lineno);
             else
-              fprintf(listing, "\n** Symbol table for nested scope in function %s at line %d\n", node_currentFunction->attr.name, t->lineno);
+              fprintf(listing, "\n** Symbol table for nested scope in function %s closed at line %d\n", node_currentFunction->attr.name, t->lineno);
             printSymTab(listing);
           }
-          flag_functionDeclared = FALSE;
           if(scope_incremented)
             decrementScope();
           break;
@@ -116,9 +124,9 @@ static void insertNode(TreeNode *t)
         BucketList l = lookupSymbol(t, TRUE);
         if(l != NULL && l->symbol_class != Function)
           typeError(t, "used a non-function like a function");
-        flag_callArguments = TRUE;
+        ++flag_callArguments;
         insertNode(t->child[0]); /* This takes care of arguments */
-        flag_callArguments = FALSE;
+        --flag_callArguments;
         break;
       }
       }
@@ -136,7 +144,6 @@ static void insertNode(TreeNode *t)
         insertNode(t->child[1]);
         break;
       case FunDeclK:
-        flag_functionDeclared = 1;
         node_currentFunction = t;
         registerSymbol(t, Function, FALSE, t->child[0]->type);
         incrementScope(t);
@@ -144,10 +151,10 @@ static void insertNode(TreeNode *t)
         t->scopeSymbolTable->location=4;  /* memory offset for paramters starts before control link */
         insertNode(t->child[1]);          /* This child takes care of parameter declarations */
         t->scopeSymbolTable->location=-4; /* memory offset for local symbols start after return address */
-        insertNode(t->child[2]);
+        flag_functionDeclared = TRUE;
+        insertNode(t->child[2]);          /* This child takes care of function body */
         decrementScope();
-        flag_functionDeclared = 0;
-
+        node_currentFunction = NULL;
         break;
       }
     case TypeK:
@@ -186,6 +193,116 @@ void buildSymtab(TreeNode *syntaxTree)
   }
 }
 
+/* Check number and types of
+ * function parameters and call arguments
+ */
+static void checkArguments(TreeNode *function, TreeNode *call)
+{
+  /* Function parameters are in function->child[1] */
+  /* Call arguments are in call->child[0]          */
+  int counter_params = 0;
+  int counter_args = 0;
+  TreeNode *params = function->child[1];
+  TreeNode *args = call->child[0];
+  char buff[256];
+
+  /* If VoidParamK, args MUST be NULL */
+  if(params && params->kind.param == VoidParamK)
+  {
+    if(args)
+      argumentError(args, function->attr.name, "This function does not take arguments.");
+    return;
+  }
+
+  if(params) ++counter_params;
+  if(args) ++counter_args;
+  while(params && args)
+  {
+    /* VoidParamK: NEVER OK */
+    /* VarParamK: AssignK, OpK, ConstK, ArrK이면 OK
+                  VarK이면 lookup해서 !is_array이어야 OK
+                  CallK이면 lookup해서 type==Integer이어야 OK*/
+    /* ArrParamK: VarK이면서 lookup해서 is_array이어야 OK */
+    switch(params->kind.param)
+    {
+      BucketList symbol;
+      case VoidParamK:
+        argumentError(args, function->attr.name, "This function does not take arguments.");
+        return;
+      case VarParamK:
+          if(args->kind.exp == VarK)
+          {
+            symbol = lookupSymbol(args, FALSE);
+            if(symbol->is_array)
+            {
+              sprintf(buff, "Expected integer for argument %d, but received array.", counter_args);
+              argumentError(args, function->attr.name, buff);
+              return;
+            }
+          }
+          else if(args->kind.exp == CallK)
+          {
+            symbol = lookupSymbol(args, FALSE);
+            if(symbol->type != Integer)
+            {
+              sprintf(buff, "Expected integer for argument %d, but received void function call.", counter_args);
+              argumentError(args, function->attr.name, buff);
+              return;
+            }
+          }
+        break;
+        case ArrParamK:
+          if(args->kind.exp != VarK)
+          {
+              sprintf(buff, "Expected array for argument %d, but received something else.", counter_args);
+              argumentError(args, function->attr.name, buff);
+              return;
+          }
+          else
+          {
+            symbol = lookupSymbol(args, FALSE);
+            if(!symbol->is_array)
+            {
+              sprintf(buff, "Expected array for argument %d, but received variable.", counter_args);
+              argumentError(args, function->attr.name, buff);
+              return;
+            }
+          }
+        break;
+    }
+
+    /* Move to next parameter & argument */
+    params = params->sibling;
+    args = args->sibling;
+    if(params) ++counter_params;
+    if(args) ++counter_args;
+  }
+  if(!params && args) /* Too many arguments */
+  {
+    while(1)
+    {
+      args = args->sibling;
+      if(args) ++counter_args;
+      else break;
+    }
+    sprintf(buff, "Too many arguments. %d expected, %d given.", counter_params, counter_args);
+    semanticError(args, buff);
+    return;
+  }
+  if(params && !args) /* Too few arguments */
+  {
+    while(1)
+    {
+      params = params->sibling;
+      if(params) ++counter_params;
+      else break;
+    }
+    sprintf(buff, "Too few arguments. %d expected, %d given.", counter_params, counter_args);
+    semanticError(args, buff);
+    return;
+  }
+}
+
 /* Procedure checkNode performs
  * type checking at a single tree node
  */
@@ -200,22 +317,18 @@ static void checkNode(TreeNode *t)
       {
       case CompoundK:
       {
-        int scope_incremented = 0;
+        int scope_incremented = FALSE;
         if(!flag_functionDeclared)
         {
           incrementScope(t);
-          scope_incremented = 1;
+          scope_incremented = TRUE;
         }
-        else
-          flag_functionDeclared = 0;
-
+        flag_functionDeclared = FALSE;
+        
         checkNode(t->child[0]);
         checkNode(t->child[1]);
         if(scope_incremented)
-        {
           decrementScope();
-          scope_incremented = 0;
-        }
         break;
       }
       case SelectionK:
@@ -234,9 +347,7 @@ static void checkNode(TreeNode *t)
       case ReturnK:
         checkNode(t->child[0]);
         if (t->child[0]->type != node_currentFunction->type)
-        {
           typeError(t->child[0], "Return value does not match function type");
-        }
         break;
       }
       break;
@@ -270,9 +381,16 @@ static void checkNode(TreeNode *t)
         t->type = lookupSymbol(t, FALSE)->type;
         break;
       case CallK:
+      {
+        BucketList l;
         checkNode(t->child[0]);
-        t->type = lookupSymbol(t, FALSE)->type;
+        l = lookupSymbol(t, FALSE);
+        t->type = l->type;
+        
+        /* Check number and type of arguments for function call */
+        checkArguments(l->treeNode, t);
         break;
+      }
       }
       break;
     case DeclK:
@@ -292,13 +410,15 @@ static void checkNode(TreeNode *t)
         checkNode(t->child[1]);
         break;
       case FunDeclK:
-        flag_functionDeclared = 1;
+        flag_functionDeclared = TRUE;
+        node_currentFunction = t;
         incrementScope(t);
         checkNode(t->child[0]);
+        t->type = t->child[0]->type;
         checkNode(t->child[1]);
         checkNode(t->child[2]);
         decrementScope();
-        flag_functionDeclared = 0;
+        flag_functionDeclared = FALSE;
         node_currentFunction = NULL;
 
         /* Sematic checks of main function */
