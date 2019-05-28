@@ -119,17 +119,17 @@ params              : param_list
                     ;
 param_list          : param_list COMMA param
                         {
-                            YYSTYPE t = $1;
+                            YYSTYPE t = $3;
                             if (t != NULL)
                             {
                                 while (t->sibling != NULL)
                                 {
                                     t = t->sibling;
                                 }
-                                t->sibling = $3;
-                                $$ = $1;
+                                t->sibling = $1;
+                                $$ = $3;
                             }
-                            else $$ = $3;
+                            else $$ = $1;
                         }
                     | param  { $$ = $1; }
                     ;
@@ -342,17 +342,17 @@ args                : arg_list { $$ = $1; }
                     ;
 arg_list            : arg_list COMMA expression
                         {
-                            YYSTYPE t = $1;
+                            YYSTYPE t = $3;
                             if (t != NULL)
                             {
                                 while (t->sibling != NULL)
                                 {
                                     t = t->sibling;
                                 }
-                                t->sibling = $3;
-                                $$ = $1;
+                                t->sibling = $1;
+                                $$ = $3;
                             }
-                            else $$ = $3;
+                            else $$ = $1;
                         }
                     | expression { $$ = $1; }
                     ;
