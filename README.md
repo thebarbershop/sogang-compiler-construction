@@ -19,10 +19,7 @@ This project is based on codes for a TINY Language compiler, whose source code i
 ## Project 3: Semantic Analyzer
 
 - [x] Constructed a symbol table.
-    - Detect scoping error.
-    - TODO: Review memory location.
-- [ ] Implemented type check.
-- [ ] Implemented other semantic error checks.
+- [x] Implemented a semantic analyzer that performs semantic error check.
 
 ---
 
