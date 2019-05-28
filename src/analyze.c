@@ -26,7 +26,7 @@ static void semanticError(TreeNode *t, const char *message)
 static int flag_functionDeclared = FALSE;
 static int flag_callArguments = FALSE;
 static int flag_mainDeclared = FALSE;
-static ExpType type_currentFunction;
+static TreeNode* node_currentFunction;
 /* Procedure insertNode inserts 
  * identifiers stored in t into 
  * the symbol table 
@@ -42,18 +42,23 @@ static void insertNode(TreeNode *t)
       {
         case CompoundK:
         {
-          int scope_incremented = 0;
+          int scope_incremented = FALSE;
           if(!flag_functionDeclared)
           {
             incrementScope(t);
-            scope_incremented = 1;
+            scope_incremented = TRUE;
           }
-          else
-            flag_functionDeclared = 0;
           insertNode(t->child[0]);
           insertNode(t->child[1]);
           if(TraceAnalyze)
+          {
+            if(flag_functionDeclared)
+              fprintf(listing, "\n** Symbol table for scope of function %s at line %d\n", node_currentFunction->attr.name, node_currentFunction->lineno);
+            else
+              fprintf(listing, "\n** Symbol table for nested scope in function %s at line %d\n", node_currentFunction->attr.name, t->lineno);
             printSymTab(listing);
+          }
+          flag_functionDeclared = FALSE;
           if(scope_incremented)
             decrementScope();
           break;
@@ -88,18 +93,20 @@ static void insertNode(TreeNode *t)
       case VarK:
       {
         BucketList l = lookupSymbol(t, TRUE);
-        if (l->symbol_class == Function)
-            typeError(t, "used a function like a variable");
-        else if (!flag_callArguments) {
-          if (l->is_array)
-            typeError(t, "used an array like a variable");
+        if(l != NULL) {
+          if (l->symbol_class == Function)
+              typeError(t, "used a function like a variable");
+          else if (!flag_callArguments) {
+            if (l->is_array)
+              typeError(t, "used an array like a variable");
+          }
         }
         break;
       }
       case ArrK:
       {
         BucketList l = lookupSymbol(t, TRUE);
-        if(!l->is_array)
+        if(l != NULL && !l->is_array)
           typeError(t, "used a non-array like a array");
         insertNode(t->child[0]);
         break;
@@ -107,7 +114,7 @@ static void insertNode(TreeNode *t)
       case CallK:
       {
         BucketList l = lookupSymbol(t, TRUE);
-        if(l->symbol_class != Function)
+        if(l != NULL && l->symbol_class != Function)
           typeError(t, "used a non-function like a function");
         flag_callArguments = TRUE;
         insertNode(t->child[0]); /* This takes care of arguments */
@@ -130,6 +137,7 @@ static void insertNode(TreeNode *t)
         break;
       case FunDeclK:
         flag_functionDeclared = 1;
+        node_currentFunction = t;
         registerSymbol(t, Function, FALSE, t->child[0]->type);
         incrementScope(t);
         insertNode(t->child[0]);
@@ -172,7 +180,10 @@ void buildSymtab(TreeNode *syntaxTree)
   initSymTab();
   insertNode(syntaxTree);
   if (TraceAnalyze)
+  {
+    fprintf(listing, "\n** Symbol table for global scope\n");
     printSymTab(listing);
+  }
 }
 
 /* Procedure checkNode performs
@@ -201,7 +212,10 @@ static void checkNode(TreeNode *t)
         checkNode(t->child[0]);
         checkNode(t->child[1]);
         if(scope_incremented)
+        {
           decrementScope();
+          scope_incremented = 0;
+        }
         break;
       }
       case SelectionK:
@@ -219,8 +233,10 @@ static void checkNode(TreeNode *t)
         break;
       case ReturnK:
         checkNode(t->child[0]);
-        if (t->child[0]->type != type_currentFunction)
+        if (t->child[0]->type != node_currentFunction->type)
+        {
           typeError(t->child[0], "Return value does not match function type");
+        }
         break;
       }
       break;
@@ -283,8 +299,7 @@ static void checkNode(TreeNode *t)
         checkNode(t->child[2]);
         decrementScope();
         flag_functionDeclared = 0;
-
-        type_currentFunction = t->child[0]->type;
+        node_currentFunction = NULL;
 
         /* Sematic checks of main function */
         if(!strcmp(t->attr.name, "main")) {

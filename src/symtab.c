@@ -45,7 +45,7 @@ static void scopeError(TreeNode *t, const char *message)
   case ConstK:
     break;
   }
-  fprintf(listing, "%s %s at line %d: %s\n", kindtype, t->attr.name, t->lineno, message);
+  fprintf(listing, "Scope Error at line %d: %s %s %s\n", t->lineno, kindtype, t->attr.name, message);
   Error=TRUE;
 }
 
@@ -112,6 +112,7 @@ BucketList lookupSymbol(TreeNode *t, int reference)
     }
   }
   scopeError(t, "used without declaration");
+  currentScopeSymbolTable = original_currentScopeSymbolTable;
   return NULL;
 }
 
