@@ -1,0 +1,50 @@
+/* A sample code that prints multiplication table */
+
+/* #include <stdio.h> */
+int mult(int a, int b)
+{
+    int c;
+    c = a*b;
+    return c;
+}
+
+void output(int ch)
+{
+    /*printf("%d", ch);*/
+}
+void space(void) {
+    /*putc(' ', stdout);*/
+}
+void newline(void) {
+    /*putc('\n', stdout);*/
+}
+
+void main(void)
+{
+    int i;
+    i = 2;
+    while(i < 10)
+    {
+        int row[10];
+        int j;
+        j = 1;
+        while(j < 10)
+        {
+            int k;
+            k = mult(i, j);
+            row[j] = k;
+            output(row[j]);
+            if(j < 9)
+            {
+                space();
+            }
+            else
+            {
+                newline();
+            }
+            
+            j = j + 1;
+        }
+        i = i + 1;
+    }
+}
