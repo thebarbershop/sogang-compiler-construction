@@ -100,7 +100,7 @@ static void insertNode(TreeNode *t)
         break;
       case VarK:
       {
-        BucketList l = lookupSymbol(t, TRUE);
+        BucketList l = lookupSymbol(t);
         if(l != NULL) {
           if (l->symbol_class == Function)
               typeError(t, "used a function like a variable");
@@ -108,22 +108,29 @@ static void insertNode(TreeNode *t)
             if (l->is_array)
               typeError(t, "used an array like a variable");
           }
+          t->symbol = l;
         }
         break;
       }
       case ArrK:
       {
-        BucketList l = lookupSymbol(t, TRUE);
-        if(l != NULL && !l->is_array)
+        BucketList l = lookupSymbol(t);
+        if(l != NULL) {
+          t->symbol = l;
+          if(!l->is_array)
           typeError(t, "used a non-array like a array");
+        }
         insertNode(t->child[0]);
         break;
       }
       case CallK:
       {
-        BucketList l = lookupSymbol(t, TRUE);
-        if(l != NULL && l->symbol_class != Function)
-          typeError(t, "used a non-function like a function");
+        BucketList l = lookupSymbol(t);
+        if(l != NULL) {
+          t->symbol = l;
+          if(l->symbol_class != Function)
+            typeError(t, "used a non-function like a function");
+        }
         ++flag_callArguments;
         insertNode(t->child[0]); /* This takes care of arguments */
         --flag_callArguments;
@@ -148,11 +155,11 @@ static void insertNode(TreeNode *t)
         registerSymbol(t, Function, FALSE, t->child[0]->type);
         incrementScope(t);
         insertNode(t->child[0]);
-        setCurrentScopeMemoryLocation(4);        /* memory offset for paramters starts before control link */
-        insertNode(t->child[1]);          /* This child takes care of parameter declarations */
-        setCurrentScopeMemoryLocation(-4);       /* memory offset for local symbols start after return address */
+        setCurrentScopeMemoryLocation(4);   /* memory offset for paramters starts before control link */
+        insertNode(t->child[1]);            /* This child takes care of parameter declarations */
+        setCurrentScopeMemoryLocation(-4);  /* memory offset for local symbols start after return address */
         flag_functionDeclared = TRUE;
-        insertNode(t->child[2]);          /* This child takes care of function body */
+        insertNode(t->child[2]);            /* This child takes care of function body */
         decrementScope();
         node_currentFunction = NULL;
         break;
@@ -232,7 +239,7 @@ static void checkArguments(TreeNode *function, TreeNode *call)
       case VarParamK:
           if(args->kind.exp == VarK)
           {
-            symbol = lookupSymbol(args, FALSE);
+            symbol = params->symbol;
             if(symbol->is_array)
             {
               sprintf(buff, "Expected integer for argument %d, but received array.", counter_args);
@@ -242,7 +249,7 @@ static void checkArguments(TreeNode *function, TreeNode *call)
           }
           else if(args->kind.exp == CallK)
           {
-            symbol = lookupSymbol(args, FALSE);
+            symbol = params->symbol;
             if(symbol->type != Integer)
             {
               sprintf(buff, "Expected integer for argument %d, but received void function call.", counter_args);
@@ -260,7 +267,7 @@ static void checkArguments(TreeNode *function, TreeNode *call)
           }
           else
           {
-            symbol = lookupSymbol(args, FALSE);
+            symbol = params->symbol;
             if(!symbol->is_array)
             {
               sprintf(buff, "Expected array for argument %d, but received variable.", counter_args);
@@ -362,23 +369,21 @@ void typeCheck(TreeNode *t)
         t->type = Integer;
         break;
       case VarK:
-        t->type = lookupSymbol(t, FALSE)->type;
+        t->type = t->symbol->type;
         break;
       case ArrK:
         typeCheck(t->child[0]);
         if ((t->child[0]->type != Integer))
           typeError(t, "Array index in not integer");
-        t->type = lookupSymbol(t, FALSE)->type;
+        t->type = t->symbol->type;
         break;
       case CallK:
       {
-        BucketList l;
-        typeCheck(t->child[0]);
-        l = lookupSymbol(t, FALSE);
-        t->type = l->type;
+        typeCheck(t->child[0]);;
+        t->type = t->symbol->type;
         
         /* Check number and type of arguments for function call */
-        checkArguments(l->treeNode, t);
+        checkArguments(t->symbol->treeNode, t);
         break;
       }
       }

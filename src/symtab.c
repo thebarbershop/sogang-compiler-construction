@@ -69,8 +69,10 @@ static BucketList st_insert(char *name, int lineno, int loc)
     l->name = name;
     l->lines = malloc(sizeof(struct LineListRec));
     l->lines->lineno = lineno;
-    l->memloc = loc;
     l->lines->next = NULL;
+    l->memloc = loc;
+    l->array_size = 0;
+    l->next = NULL;
     l->next = currentScopeSymbolTable->hashTable[h];
     currentScopeSymbolTable->hashTable[h] = l;
   }
@@ -91,7 +93,7 @@ static BucketList st_insert(char *name, int lineno, int loc)
 } /* st_insert */
 
 /* Look up symbol name. return table entry or NULL. */
-BucketList lookupSymbol(TreeNode *t, int reference)
+BucketList lookupSymbol(TreeNode *t)
 {
   SymbolTable original_currentScopeSymbolTable = currentScopeSymbolTable;
   int h = hash(t->attr.name);
@@ -105,8 +107,7 @@ BucketList lookupSymbol(TreeNode *t, int reference)
       currentScopeSymbolTable = currentScopeSymbolTable->prev;
     else
     {
-      if (reference)
-        st_insert(t->attr.name, t->lineno, 0);
+      st_insert(t->attr.name, t->lineno, 0);
       currentScopeSymbolTable = original_currentScopeSymbolTable;
       return l;
     }

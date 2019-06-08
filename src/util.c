@@ -250,7 +250,10 @@ char *getOp(TokenType op) {
 }
 
 static void destroySymbol(BucketList symbol) {
-  free(symbol->name);
+  if(!symbol)
+    return;
+  if(symbol->name)
+    free(symbol->name);
   while(symbol->lines) {
     LineList lineToDestroy = symbol->lines;
     symbol->lines = symbol->lines->next;
@@ -262,13 +265,25 @@ static void destroySymbol(BucketList symbol) {
 /* recursively free syntax tree nodes and related pointers */
 void destroyTree(TreeNode * node) {
   int i;
-  for(i = 0; i < MAXCHILDREN; i++) {
-    if(node->child[i])
-      destroyTree(node->child[i]);
-  }
-  if(node->sibling)
-    destroyTree(node->sibling);
-  if(node->nodekind==DeclK)
+  if(!node)
+    return;
+  for(i = 0; i < MAXCHILDREN; i++)
+    destroyTree(node->child[i]);
+  destroyTree(node->sibling);
+  if(node->nodekind==DeclK || (node->nodekind == ParamK && node->kind.param != VoidParamK)) {
     destroySymbol(node->symbol);
+  }
+  if(node->nodekind==ExpK) {
+    switch(node->kind.exp) {
+      case VarK:
+      case ArrK:
+      case CallK:
+        if(node->attr.name)
+          free(node->attr.name);
+        break;
+      default:
+        break;
+    }
+  }
   free(node);
 }

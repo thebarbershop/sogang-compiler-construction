@@ -44,7 +44,7 @@ void decrementScope(void);
 int registerSymbol(TreeNode *t, SymbolClass symbol_class, int is_array, ExpType type);
 
 /* Attempts to lookup symbol from table. Return table entry or NULL. */
-BucketList lookupSymbol(TreeNode *t, int reference);
+BucketList lookupSymbol(TreeNode *t);
 
 /* Return if the current scope is global. */
 int isGlobalScope(void);
