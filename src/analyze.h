@@ -19,4 +19,9 @@ void buildSymtab(TreeNode *);
  */
 void typeCheck(TreeNode *);
 
+/* Function mainCheck finds the main function
+ * and asserts it is sematically sound.
+ */
+TreeNode* mainCheck(TreeNode *);
+
 #endif

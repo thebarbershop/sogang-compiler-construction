@@ -31,7 +31,6 @@ static void semanticError(TreeNode *t, const char *message)
 
 static int flag_functionDeclared = FALSE;
 static int flag_callArguments = FALSE;
-static int flag_mainDeclared = FALSE;
 static TreeNode* node_currentFunction;
 /* Procedure insertNode inserts 
  * identifiers stored in t into 
@@ -389,8 +388,6 @@ void typeCheck(TreeNode *t)
       }
       break;
     case DeclK:
-      if(flag_mainDeclared && isGlobalScope())
-        semanticError(t, "Illegal global declaration after main function.");
       switch(t->kind.decl)
       {
       case VarDeclK:
@@ -411,15 +408,6 @@ void typeCheck(TreeNode *t)
         typeCheck(t->child[1]);
         typeCheck(t->child[2]);
         node_currentFunction = NULL;
-
-        /* Sematic checks of main function */
-        if(!strcmp(t->attr.name, "main")) {
-          flag_mainDeclared = TRUE;
-          if(t->child[0]->type != Void)
-            semanticError(t, "main function must be void type.");
-          if(t->child[1]->kind.param != VoidParamK)
-            semanticError(t, "main function should not take any parameters.");
-        }
 
         break;
       }
@@ -445,4 +433,24 @@ void typeCheck(TreeNode *t)
     }
     t = t->sibling;
   }
+}
+
+/* Function mainCheck finds the main function
+ * and asserts it is sematically sound.
+ */
+TreeNode* mainCheck(TreeNode * node) {
+  while(node) {
+    if(!strcmp(node->attr.name, "main")) {
+      if(node->type != Void)
+        semanticError(node, "Return type of function \'main\' must be void.");
+      else if(node->child[1]->kind.param != VoidParamK)
+        semanticError(node, "Parameter of function \'main\' must be void.");
+      else if(node->sibling)
+        semanticError(node, "Illegal global definition after function \'main\'.");
+      return node;
+    }
+    node = node->sibling;
+  }
+  semanticError(node, "Reached EOF before find function \'main\'.");
+  return NULL;
 }

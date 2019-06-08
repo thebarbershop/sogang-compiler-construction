@@ -52,6 +52,7 @@ int main(int argc, char *argv[])
   int i;
   #if !NO_PARSE
   TreeNode *syntaxTree;
+  TreeNode *mainNode;
   #endif
   char pgm[120]; /* source code file name */
   if (argc != 2)
@@ -92,12 +93,23 @@ int main(int argc, char *argv[])
       fprintf(listing, "Building Symbol Tree..\n\n");
     buildSymtab(syntaxTree);
     destroyGlobalSymbolTable();
+    if(!Error)
+        fprintf(listing, "No error detected.\n");
   }
   if(!Error)
   {
       fprintf(listing, "Performing Type Check..\n");
       typeCheck(syntaxTree);
-      fprintf(listing, "Finished Type Check\n");
+      if(!Error)
+        fprintf(listing, "No error detected.\n");
+  }
+  if(!Error) {
+    fprintf(listing, "Finding and checking main function..\n");
+    mainNode = mainCheck(syntaxTree);
+    if(!Error) {
+      fprintf(listing, "Function \'main\' found at line %d\n", mainNode->lineno);
+      fprintf(listing, "No error detected.\n");
+    }
   }
 #if !NO_CODE
   if (!Error)

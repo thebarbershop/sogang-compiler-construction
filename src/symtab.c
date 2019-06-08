@@ -228,10 +228,6 @@ void decrementScope(void)
   free(tableToDelete);
 }
 
-int isGlobalScope(void) {
-  return (currentScopeSymbolTable->depth == 0);
-}
-
 /* set memory location of current symbol table */
 void setCurrentScopeMemoryLocation(int location) {
   currentScopeSymbolTable->location = location;

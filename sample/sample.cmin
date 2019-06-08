@@ -1,23 +1,8 @@
-/****************************************************/
-/* File: alltoken.cmin                              */
-/* Dummy C- program that uses all tokens            */
-/* defined in the langauge specifications at        */
-/* Compiler Construction: Principles and Practice   */
-/* Kenneth C. Louden, 1997, pp.491-492.             */
-/* Written by Eom Taegyung                          */
-/****************************************************/
+int a(void) {
 
+}
 
 void main(void) {
-    int i;
-    int arr[100];
-
-    {
-      int x;
-      int y;
-      {
-        int x;
-        int y;
-      }
-    }
 }
+
+int b;
