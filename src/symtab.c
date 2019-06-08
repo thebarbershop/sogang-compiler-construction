@@ -50,7 +50,7 @@ static void scopeError(TreeNode *t, const char *message)
 }
 
 /* the symbol table */
-static SymbolTable globalSymbolTable, currentScopeSymbolTable;
+static SymbolTable currentScopeSymbolTable;
 
 /* Procedure st_insert inserts line numbers and
  * memory locations into the symbol table
@@ -192,16 +192,16 @@ void printSymTab(FILE *listing)
   fprintf(listing, "\n");
 } /* printSymTab */
 
-/* Initializes the global static variable globalSymbolTable */
+/* Initializes the global static variable currentScopeSymbolTable
+ * to represent the global scope */
 void initSymTab(void)
 {
-  globalSymbolTable = malloc(sizeof(struct SymbolTableRec));
-  globalSymbolTable->depth = 0;
-  globalSymbolTable->prev = NULL;
-  globalSymbolTable->next = NULL;
+  currentScopeSymbolTable = malloc(sizeof(struct SymbolTableRec));
+  currentScopeSymbolTable->depth = 0;
+  currentScopeSymbolTable->prev = NULL;
+  currentScopeSymbolTable->next = NULL;
   for(int i = 0; i < HASHTABLE_SIZE; ++i)
-    globalSymbolTable->hashTable[i] = NULL;
-  currentScopeSymbolTable = globalSymbolTable;
+    currentScopeSymbolTable->hashTable[i] = NULL;
 }
 
 /* increment current scope */

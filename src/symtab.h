@@ -30,7 +30,8 @@ enum
  */
 void printSymTab(FILE *listing);
 
-/* Initializes the global static variable globalSymbolTable */
+/* Initializes the global static variable currentScopeSymbolTable
+ * to represent the global scope */
 void initSymTab(void);
 
 /* increment current scope */
