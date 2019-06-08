@@ -303,10 +303,10 @@ static void checkArguments(TreeNode *function, TreeNode *call)
   }
 }
 
-/* Procedure checkNode performs
- * type checking at a single tree node
+/* Procedure typeCheck performs type checking 
+ * by a postorder syntax tree traversal
  */
-static void checkNode(TreeNode *t)
+void typeCheck(TreeNode *t)
 {
   while(t)
   {
@@ -325,27 +325,27 @@ static void checkNode(TreeNode *t)
         }
         flag_functionDeclared = FALSE;
         
-        checkNode(t->child[0]);
-        checkNode(t->child[1]);
+        typeCheck(t->child[0]);
+        typeCheck(t->child[1]);
         if(scope_incremented)
           decrementScope();
         break;
       }
       case SelectionK:
-        checkNode(t->child[0]);
-        checkNode(t->child[1]);
-        checkNode(t->child[2]);
+        typeCheck(t->child[0]);
+        typeCheck(t->child[1]);
+        typeCheck(t->child[2]);
         if (t->child[0]->type != Integer)
           typeError(t->child[0], "If-condition is not int");
         break;
       case IterationK:
-        checkNode(t->child[0]);
-        checkNode(t->child[1]);
+        typeCheck(t->child[0]);
+        typeCheck(t->child[1]);
         if (t->child[0]->type != Integer)
           typeError(t->child[0], "While-condition is not int");
         break;
       case ReturnK:
-        checkNode(t->child[0]);
+        typeCheck(t->child[0]);
         if (t->child[0]->type != node_currentFunction->type)
           typeError(t->child[0], "Return value does not match function type");
         break;
@@ -355,15 +355,15 @@ static void checkNode(TreeNode *t)
       switch (t->kind.exp)
       {
       case AssignK:
-        checkNode(t->child[0]);
-        checkNode(t->child[1]);
+        typeCheck(t->child[0]);
+        typeCheck(t->child[1]);
         if (t->child[0]->type != t->child[1]->type)
           typeError(t->child[1], "Assign type does not match");
         t->type = t->child[0]->type;
         break;
       case OpK:
-        checkNode(t->child[0]);
-        checkNode(t->child[1]);
+        typeCheck(t->child[0]);
+        typeCheck(t->child[1]);
         if ((t->child[0]->type != Integer) || (t->child[1]->type != Integer))
           typeError(t, "Op applied to non-integer");
         t->type = Integer;
@@ -375,7 +375,7 @@ static void checkNode(TreeNode *t)
         t->type = lookupSymbol(t, FALSE)->type;
         break;
       case ArrK:
-        checkNode(t->child[0]);
+        typeCheck(t->child[0]);
         if ((t->child[0]->type != Integer))
           typeError(t, "Array index in not integer");
         t->type = lookupSymbol(t, FALSE)->type;
@@ -383,7 +383,7 @@ static void checkNode(TreeNode *t)
       case CallK:
       {
         BucketList l;
-        checkNode(t->child[0]);
+        typeCheck(t->child[0]);
         l = lookupSymbol(t, FALSE);
         t->type = l->type;
         
@@ -399,24 +399,24 @@ static void checkNode(TreeNode *t)
       switch(t->kind.decl)
       {
       case VarDeclK:
-        checkNode(t->child[0]);
+        typeCheck(t->child[0]);
         if (t->child[0]->type == Void)
           typeError(t, "Invalid variable declaration of type void");
         break;
       case ArrDeclK:
-        checkNode(t->child[0]);
+        typeCheck(t->child[0]);
         if (t->child[0]->type == Void)
           typeError(t, "Invalid array declaration of type void");
-        checkNode(t->child[1]);
+        typeCheck(t->child[1]);
         break;
       case FunDeclK:
         flag_functionDeclared = TRUE;
         node_currentFunction = t;
         incrementScope(t);
-        checkNode(t->child[0]);
+        typeCheck(t->child[0]);
         t->type = t->child[0]->type;
-        checkNode(t->child[1]);
-        checkNode(t->child[2]);
+        typeCheck(t->child[1]);
+        typeCheck(t->child[2]);
         decrementScope();
         flag_functionDeclared = FALSE;
         node_currentFunction = NULL;
@@ -438,12 +438,12 @@ static void checkNode(TreeNode *t)
       switch (t->kind.param)
       {
       case VarParamK:
-        checkNode(t->child[0]);
+        typeCheck(t->child[0]);
         if (t->child[0]->type == Void)
           typeError(t, "Invalid parameter of type void");
         break;
       case ArrParamK:
-        checkNode(t->child[0]);
+        typeCheck(t->child[0]);
         if (t->child[0]->type == Void)
           typeError(t, "Invalid array parameter of type void");
         break;
@@ -454,12 +454,4 @@ static void checkNode(TreeNode *t)
     }
     t = t->sibling;
   }
-}
-
-/* Procedure typeCheck performs type checking 
- * by a postorder syntax tree traversal
- */
-void typeCheck(TreeNode *syntaxTree)
-{
-  checkNode(syntaxTree);
 }
