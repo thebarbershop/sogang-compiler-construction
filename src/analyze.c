@@ -148,9 +148,9 @@ static void insertNode(TreeNode *t)
         registerSymbol(t, Function, FALSE, t->child[0]->type);
         incrementScope(t);
         insertNode(t->child[0]);
-        t->scopeSymbolTable->location=4;  /* memory offset for paramters starts before control link */
+        setCurrentScopeMemoryLocation(4);        /* memory offset for paramters starts before control link */
         insertNode(t->child[1]);          /* This child takes care of parameter declarations */
-        t->scopeSymbolTable->location=-4; /* memory offset for local symbols start after return address */
+        setCurrentScopeMemoryLocation(-4);       /* memory offset for local symbols start after return address */
         flag_functionDeclared = TRUE;
         insertNode(t->child[2]);          /* This child takes care of function body */
         decrementScope();
@@ -317,18 +317,8 @@ void typeCheck(TreeNode *t)
       {
       case CompoundK:
       {
-        int scope_incremented = FALSE;
-        if(!flag_functionDeclared)
-        {
-          incrementScope(t);
-          scope_incremented = TRUE;
-        }
-        flag_functionDeclared = FALSE;
-        
         typeCheck(t->child[0]);
         typeCheck(t->child[1]);
-        if(scope_incremented)
-          decrementScope();
         break;
       }
       case SelectionK:
@@ -410,15 +400,11 @@ void typeCheck(TreeNode *t)
         typeCheck(t->child[1]);
         break;
       case FunDeclK:
-        flag_functionDeclared = TRUE;
         node_currentFunction = t;
-        incrementScope(t);
         typeCheck(t->child[0]);
         t->type = t->child[0]->type;
         typeCheck(t->child[1]);
         typeCheck(t->child[2]);
-        decrementScope();
-        flag_functionDeclared = FALSE;
         node_currentFunction = NULL;
 
         /* Sematic checks of main function */

@@ -49,4 +49,10 @@ BucketList lookupSymbol(TreeNode *t, int reference);
 /* Return if the current scope is global. */
 int isGlobalScope(void);
 
+/* set memory location of current symbol table */
+void setCurrentScopeMemoryLocation(int);
+
+/* destroys the global symbol table */
+void destroyGlobalSymbolTable(void);
+
 #endif

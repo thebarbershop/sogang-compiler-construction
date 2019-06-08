@@ -25,6 +25,7 @@
 #include "parse.h" 
 #include "y.tab.h"
 #if !NO_ANALYZE
+#include "symtab.h"
 #include "analyze.h"
 #if !NO_CODE
 //#include "cgen.h"
@@ -90,6 +91,7 @@ int main(int argc, char *argv[])
     if(TraceAnalyze)
       fprintf(listing, "Building Symbol Tree..\n\n");
     buildSymtab(syntaxTree);
+    destroyGlobalSymbolTable();
   }
   if(!Error)
   {
@@ -119,6 +121,7 @@ int main(int argc, char *argv[])
 #endif
   fclose(source);
   destroyTree(syntaxTree);
+  yylex_destroy();
 
   return 0;
 }

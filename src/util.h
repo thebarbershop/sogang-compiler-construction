@@ -34,4 +34,7 @@ TokenType getToken(void);
 /* Free all ast nodes and related pointers */
 void destroyTree(TreeNode *);
 
+/* Destroys all memory used by scanner.
+ * Implemented in lex.yy.c */
+int yylex_destroy(void);
 #endif

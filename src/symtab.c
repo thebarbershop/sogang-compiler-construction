@@ -141,6 +141,7 @@ int registerSymbol(TreeNode *t, SymbolClass symbol_class, int is_array, ExpType 
       currentScopeSymbolTable->location += memloc_coeff*WORD_SIZE*(t->child[1]->attr.val-1);
     if (t->nodekind == DeclK && t->kind.decl == FunDeclK)
       symbol->treeNode = t;
+    t->symbol = symbol;
     return 1;
   }
   else
@@ -198,8 +199,8 @@ void initSymTab(void)
 {
   currentScopeSymbolTable = malloc(sizeof(struct SymbolTableRec));
   currentScopeSymbolTable->depth = 0;
+  currentScopeSymbolTable->location = 0;
   currentScopeSymbolTable->prev = NULL;
-  currentScopeSymbolTable->next = NULL;
   for(int i = 0; i < HASHTABLE_SIZE; ++i)
     currentScopeSymbolTable->hashTable[i] = NULL;
 }
@@ -207,29 +208,35 @@ void initSymTab(void)
 /* increment current scope */
 void incrementScope(TreeNode *t)
 {
-  if(t->scopeSymbolTable == NULL) {
-    currentScopeSymbolTable->next = malloc(sizeof(struct SymbolTableRec));
-    currentScopeSymbolTable->next->depth = currentScopeSymbolTable->depth + 1;
-    currentScopeSymbolTable->next->prev = currentScopeSymbolTable;
-    currentScopeSymbolTable->next->next = NULL;
-    currentScopeSymbolTable->next->location = currentScopeSymbolTable->location;
+  SymbolTable newSymbolTable = malloc(sizeof(struct SymbolTableRec));
+  newSymbolTable->depth = currentScopeSymbolTable->depth + 1;
+  newSymbolTable->prev = currentScopeSymbolTable;
+  newSymbolTable->location = currentScopeSymbolTable->location;
+  for(int i = 0; i < HASHTABLE_SIZE; ++i)
+    newSymbolTable->hashTable[i] = NULL;
 
-    /* Reset location offset for function declaration */
-    for(int i = 0; i < HASHTABLE_SIZE; ++i)
-      currentScopeSymbolTable->next->hashTable[i] = NULL;
-    currentScopeSymbolTable = currentScopeSymbolTable->next;
-    t->scopeSymbolTable = currentScopeSymbolTable;
-  }
-  else
-    currentScopeSymbolTable = t->scopeSymbolTable;
+  currentScopeSymbolTable = newSymbolTable;
 }
 
 /* decrement scope */
 void decrementScope(void)
 {
+  /* Move symbol table pointer to previous scope */
+  SymbolTable tableToDelete = currentScopeSymbolTable;
   currentScopeSymbolTable = currentScopeSymbolTable->prev;
+  free(tableToDelete);
 }
 
 int isGlobalScope(void) {
   return (currentScopeSymbolTable->depth == 0);
+}
+
+/* set memory location of current symbol table */
+void setCurrentScopeMemoryLocation(int location) {
+  currentScopeSymbolTable->location = location;
+}
+
+/* destroys the global symbol table */
+void destroyGlobalSymbolTable(void) {
+  free(currentScopeSymbolTable);
 }

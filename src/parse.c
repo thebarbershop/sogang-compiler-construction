@@ -67,6 +67,7 @@ TreeNode *newDeclNode(DeclKind kind)
     t->nodekind = DeclK;
     t->kind.decl = kind;
     t->lineno = lineno;
+    t->symbol = NULL;
   }
   return t;
 }

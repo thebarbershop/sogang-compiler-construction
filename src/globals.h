@@ -132,7 +132,7 @@ typedef struct treeNode
       char *name;          /* for variable */
    } attr;
    ExpType type; /* for type checking of exps */
-   SymbolTable scopeSymbolTable; /* Only for scope-makers (FunDeclK, CompoundK) */
+   BucketList symbol; /* for symbol declaration & reference  */
 } TreeNode;
 
 /* SIZE is the size of the hash table */
@@ -176,7 +176,7 @@ typedef struct SymbolTableRec
               * and each compound statement increses depth by 1
               */
   BucketList hashTable[HASHTABLE_SIZE];
-  struct SymbolTableRec *prev, *next;
+  struct SymbolTableRec *prev;
   int location; /* memory location index */
 } * SymbolTable;
 

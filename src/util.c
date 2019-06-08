@@ -249,7 +249,26 @@ char *getOp(TokenType op) {
   return "";
 }
 
-/* Free all ast nodes and related pointers */
-void destroyTree(TreeNode * syntaxTree) {
+static void destroySymbol(BucketList symbol) {
+  free(symbol->name);
+  while(symbol->lines) {
+    LineList lineToDestroy = symbol->lines;
+    symbol->lines = symbol->lines->next;
+    free(lineToDestroy);
+  }
+  free(symbol);
+}
 
+/* recursively free syntax tree nodes and related pointers */
+void destroyTree(TreeNode * node) {
+  int i;
+  for(i = 0; i < MAXCHILDREN; i++) {
+    if(node->child[i])
+      destroyTree(node->child[i]);
+  }
+  if(node->sibling)
+    destroyTree(node->sibling);
+  if(node->nodekind==DeclK)
+    destroySymbol(node->symbol);
+  free(node);
 }
