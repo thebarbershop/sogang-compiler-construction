@@ -25,7 +25,10 @@ static void argumentError(TreeNode *t, const char *function_name, const char *me
 
 static void semanticError(TreeNode *t, const char *message)
 {
-  fprintf(listing, "Semantic error at line %d: %s\n", t->lineno, message);
+  if(t)
+    fprintf(listing, "Semantic error at line %d: %s\n", t->lineno, message);
+  else
+    fprintf(listing, "Semantic error: %s\n", message);
   Error = TRUE;
 }
 
@@ -451,6 +454,6 @@ TreeNode* mainCheck(TreeNode * node) {
     }
     node = node->sibling;
   }
-  semanticError(node, "Reached EOF before find function \'main\'.");
+  semanticError(NULL, "Reached EOF before finding function \'main\'.");
   return NULL;
 }
