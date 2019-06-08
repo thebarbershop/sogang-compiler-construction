@@ -1,6 +1,5 @@
-int main(void)
+void main(void)
 {
-    float num1, num2, num3;
-    num3 = 1 + ;
-    return insert() + 1;
+    int num;
+    num = 1 + ;
 }
