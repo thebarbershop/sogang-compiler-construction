@@ -293,7 +293,7 @@ static void checkArguments(TreeNode *function, TreeNode *call)
       else break;
     }
     sprintf(buff, "Too many arguments. %d expected, %d given.", counter_params, counter_args);
-    semanticError(args, buff);
+    semanticError(call, buff);
     return;
   }
   if(params && !args) /* Too few arguments */
@@ -305,7 +305,7 @@ static void checkArguments(TreeNode *function, TreeNode *call)
       else break;
     }
     sprintf(buff, "Too few arguments. %d expected, %d given.", counter_params, counter_args);
-    semanticError(args, buff);
+    semanticError(call, buff);
     return;
   }
 }
