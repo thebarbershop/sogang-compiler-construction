@@ -21,7 +21,8 @@
 #define NO_CODE TRUE
 
 #if NO_PARSE
-#else 
+#else
+#include "parse.h" 
 #include "y.tab.h"
 #if !NO_ANALYZE
 #include "analyze.h"
@@ -116,7 +117,8 @@ int main(int argc, char *argv[])
 #endif
 #endif
 #endif
-  /* TODO: delete syntaxTree */
   fclose(source);
+  destroyTree(syntaxTree);
+
   return 0;
 }
