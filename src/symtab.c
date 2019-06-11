@@ -29,21 +29,48 @@ static int hash(const char *key)
 
 static void scopeError(TreeNode *t, const char *message)
 {
-  char * kindtype;
-  switch (t->kind.exp) {
-  case ArrK:
-    kindtype = "Array";
-    break;
-  case VarK:
-    kindtype = "Variable";
-    break;
-  case CallK:
-    kindtype = "Function";
-    break;
-  case AssignK:
-  case OpK:
-  case ConstK:
-    break;
+  char * kindtype = "";
+  if(t->nodekind==ExpK) {
+    switch (t->kind.exp) {
+    case ArrK:
+      kindtype = "Array";
+      break;
+    case VarK:
+      kindtype = "Variable";
+      break;
+    case CallK:
+      kindtype = "Function";
+      break;
+    case AssignK:
+    case OpK:
+    case ConstK:
+      break;
+    }
+  }
+  else if(t->nodekind==DeclK) {
+    switch (t->kind.decl) {
+    case ArrDeclK:
+      kindtype = "Array";
+      break;
+    case VarDeclK:
+      kindtype = "Variable";
+      break;
+    case FunDeclK:
+      kindtype = "Function";
+      break;
+    }
+  }
+  else if(t->nodekind==ParamK) {
+    switch (t->kind.decl) {
+    case ArrParamK:
+      kindtype = "Array Parameter";
+      break;
+    case VarParamK:
+      kindtype = "Variable Parameter";
+      break;
+    case VoidParamK:
+      return;
+    }
   }
   fprintf(listing, "Scope Error at line %d: %s %s %s\n", t->lineno, kindtype, t->attr.name, message);
   Error=TRUE;
