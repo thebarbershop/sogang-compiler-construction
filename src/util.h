@@ -37,4 +37,9 @@ void destroyTree(TreeNode *);
 /* Destroys all memory used by scanner.
  * Implemented in lex.yy.c */
 int yylex_destroy(void);
+
+/* Returns the position of last dot
+ * If no dot in string, returns length of it */
+int getBaseIndex(const char *fullPath);
+
 #endif

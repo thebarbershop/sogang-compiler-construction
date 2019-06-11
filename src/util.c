@@ -287,3 +287,20 @@ void destroyTree(TreeNode * node) {
   }
   free(node);
 }
+
+/* Returns the position of last dot
+ * If no dot in string, returns length of it */
+int getBaseIndex(const char *fullPath)
+{
+  size_t i;
+  size_t len = strlen(fullPath);
+  for (i = len - 1; i; --i) {
+    if(fullPath[i] == '.')
+      break;
+    if(fullPath[i] == '/') {
+      i = -1;
+      break;
+    }
+  }
+  return (i == -1) ? len : i;
+}
