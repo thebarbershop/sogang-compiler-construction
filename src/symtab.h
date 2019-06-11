@@ -49,7 +49,4 @@ BucketList lookupSymbol(TreeNode *t);
 /* set memory location of current symbol table */
 void setCurrentScopeMemoryLocation(int);
 
-/* destroys the global symbol table */
-void destroyGlobalSymbolTable(void);
-
 #endif

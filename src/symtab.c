@@ -232,8 +232,3 @@ void decrementScope(void)
 void setCurrentScopeMemoryLocation(int location) {
   currentScopeSymbolTable->location = location;
 }
-
-/* destroys the global symbol table */
-void destroyGlobalSymbolTable(void) {
-  free(currentScopeSymbolTable);
-}
