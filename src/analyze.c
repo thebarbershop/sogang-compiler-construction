@@ -194,6 +194,7 @@ static void insertNode(TreeNode *t)
 void buildSymtab(TreeNode *syntaxTree)
 {
   initSymTab();
+  addIOSymbols();
   insertNode(syntaxTree);
   if (TraceAnalyze)
   {

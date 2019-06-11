@@ -49,4 +49,7 @@ BucketList lookupSymbol(TreeNode *t);
 /* set memory location of current symbol table */
 void setCurrentScopeMemoryLocation(int);
 
+/* Adds global symbols for pre-defined IO functions */
+void addIOSymbols(void);
+
 #endif

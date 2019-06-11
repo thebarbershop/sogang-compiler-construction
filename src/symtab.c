@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "symtab.h"
+#include "parse.h"
 
 /* the hash function which returns a number in [0, SIZE) */
 static int hash(const char *key)
@@ -258,4 +259,57 @@ void decrementScope(void)
 /* set memory location of current symbol table */
 void setCurrentScopeMemoryLocation(int location) {
   currentScopeSymbolTable->location = location;
+}
+
+/* Adds global symbols for pre-defined IO functions */
+void addIOSymbols(void) {
+  int memloc_coeff = -1; /* positive offset for parameters; negative otherwise */
+
+  {
+    /* Register int input(void); to global symbol table */
+    BucketList symbol = st_insert("input", -1, currentScopeSymbolTable->location);
+    currentScopeSymbolTable->location += memloc_coeff*WORD_SIZE;
+    symbol->symbol_class = Function;
+    symbol->is_array = FALSE;
+    symbol->type = Integer;
+
+    /* Create a dummy tree node for input */
+    TreeNode *treeNode = newDeclNode(FunDeclK);
+    TreeNode *typeNode = newTypeNode(TypeGeneralK);
+    TreeNode *paramNode = newParamNode(VoidParamK);
+    TreeNode *stmtNode = newStmtNode(CompoundK);
+    treeNode->lineno = typeNode->lineno = paramNode->lineno = stmtNode->lineno = -1;
+    treeNode->child[0] = typeNode;
+    treeNode->child[1] = paramNode;
+    treeNode->child[2] = stmtNode;
+    typeNode->type = Integer;
+    symbol->treeNode = treeNode;
+  }
+
+  {
+    /* Register void output(int num); to global symbol table */
+    BucketList symbol = st_insert("output", -1, currentScopeSymbolTable->location);
+    currentScopeSymbolTable->location += memloc_coeff*WORD_SIZE;
+    symbol->symbol_class = Function;
+    symbol->is_array = FALSE;
+    symbol->type = Void;
+
+    /* Create a dummy tree node for output */
+    TreeNode *treeNode = newDeclNode(FunDeclK);
+    TreeNode *typeNode = newTypeNode(TypeGeneralK);
+    TreeNode *paramNode = newParamNode(VarParamK);
+    TreeNode *stmtNode = newStmtNode(CompoundK);
+    TreeNode *paramTypeNode = newTypeNode(TypeGeneralK);
+    treeNode->lineno = typeNode->lineno = paramNode->lineno = stmtNode->lineno = -1;
+    treeNode->child[0] = typeNode;
+    treeNode->child[1] = paramNode;
+    treeNode->child[2] = stmtNode;
+    typeNode->type = Void;
+    paramNode->child[0] = paramTypeNode;
+    paramNode->type = Integer;
+    paramNode->attr.name = "num";
+    paramTypeNode->type = Integer;
+
+    symbol->treeNode = treeNode;
+  }
 }
