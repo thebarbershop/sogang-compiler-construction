@@ -18,7 +18,7 @@
 /* set NO_CODE to TRUE to get a compiler that does not
  * generate code
  */
-#define NO_CODE TRUE
+#define NO_CODE FALSE
 
 #if NO_PARSE
 #else
@@ -28,7 +28,7 @@
 #include "symtab.h"
 #include "analyze.h"
 #if !NO_CODE
-//#include "cgen.h"
+#include "cgen.h"
 #endif
 #endif
 #endif
@@ -41,9 +41,9 @@ FILE *code;
 
 /* allocate and set tracing flags */
 int TraceScan = FALSE;
-int TraceParse = FALSE;
+int TraceParse = TRUE;
 int TraceAnalyze = TRUE;
-int TraceCode = FALSE;
+int TraceCode = TRUE;
 
 int Error = FALSE;
 
@@ -92,21 +92,23 @@ int main(int argc, char *argv[])
     if(TraceAnalyze)
       fprintf(listing, "Building Symbol Tree..\n\n");
     buildSymtab(syntaxTree);
-    destroyGlobalSymbolTable();
-    if(!Error)
+    decrementScope(); /* Destroy the global scope */
+    if(!Error && TraceAnalyze)
         fprintf(listing, "No error detected.\n");
   }
   if(!Error)
   {
+      if(TraceAnalyze)
       fprintf(listing, "Performing Type Check..\n");
       typeCheck(syntaxTree);
-      if(!Error)
+      if(!Error && TraceAnalyze)
         fprintf(listing, "No error detected.\n");
   }
   if(!Error) {
-    fprintf(listing, "Finding and checking main function..\n");
+    if(TraceAnalyze)
+      fprintf(listing, "Finding and checking main function..\n");
     mainNode = mainCheck(syntaxTree);
-    if(!Error) {
+    if(!Error && TraceAnalyze) {
       fprintf(listing, "Function \'main\' found at line %d\n", mainNode->lineno);
       fprintf(listing, "No error detected.\n");
     }
@@ -115,7 +117,7 @@ int main(int argc, char *argv[])
   if (!Error)
   {
     char *codefile;
-    int fnlen = strcspn(pgm, ".");
+    int fnlen = getBaseIndex(pgm);
     codefile = (char *)calloc(fnlen + 4, sizeof(char));
     strncpy(codefile, pgm, fnlen);
     strcat(codefile, ".tm");

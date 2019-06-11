@@ -1,9 +1,10 @@
 /****************************************************/
 /* File: code.c                                     */
-/* TM Code emitting utilities                       */
-/* implementation for the TINY compiler             */
+/* Code emitting utilities for the C- compiler      */
+/* and interface to the SPIM machine                */
 /* Compiler Construction: Principles and Practice   */
-/* Kenneth C. Louden                                */
+/* Kenneth C. Louden, 1997                          */
+/* Modified by Eom Taegyung                         */
 /****************************************************/
 
 #include "globals.h"
@@ -21,7 +22,17 @@ static int highEmitLoc = 0;
  * with comment c in the code file
  */
 void emitComment( char * c )
-{ if (TraceCode) fprintf(code,"* %s\n",c);}
+{ if (TraceCode) fprintf(code,"# %s\n",c);}
+
+/* Procedure emitCode prints a code line
+ * with comment in the code file
+ */
+void emitCode(char *codeLine, char *comment)
+{
+ fprintf(code, "%s", codeLine);
+ if(TraceCode && comment) fprintf(code, "\t# %s", comment);
+ fprintf(code, "\n"); 
+}
 
 /* Procedure emitRO emits a register-only
  * TM instruction
