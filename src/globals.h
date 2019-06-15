@@ -168,12 +168,12 @@ typedef struct BucketListRec
 
 /* Each scope has its own hash table.
  * The whole symbol table is managed as
- * a doubly linked list of scope-wide hash tables.
+ * a linked list of scope-wide hash tables.
  */
 typedef struct SymbolTableRec
 {
   int depth; /* global scope is of depth 0,
-              * and each compound statement increses depth by 1
+              * and each compound statement increases depth by 1
               */
   BucketList hashTable[HASHTABLE_SIZE];
   struct SymbolTableRec *prev;
