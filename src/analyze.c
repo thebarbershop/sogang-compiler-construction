@@ -101,43 +101,18 @@ static void insertNode(TreeNode *t)
       case ConstK:
         break;
       case VarK:
-      {
-        BucketList l = lookupSymbol(t);
-        if(l != NULL) {
-          if (l->symbol_class == Function)
-              typeError(t, "used a function like a variable");
-          else if (!flag_callArguments) {
-            if (l->is_array)
-              typeError(t, "used an array like a variable");
-          }
-          t->symbol = l;
-        }
+        t->symbol = lookupSymbol(t);
         break;
-      }
       case ArrK:
-      {
-        BucketList l = lookupSymbol(t);
-        if(l != NULL) {
-          t->symbol = l;
-          if(!l->is_array)
-          typeError(t, "used a non-array like a array");
-        }
+        t->symbol = lookupSymbol(t);
         insertNode(t->child[0]);
         break;
-      }
       case CallK:
-      {
-        BucketList l = lookupSymbol(t);
-        if(l != NULL) {
-          t->symbol = l;
-          if(l->symbol_class != Function)
-            typeError(t, "used a non-function like a function");
-        }
+        t->symbol = lookupSymbol(t);
         ++flag_callArguments;
         insertNode(t->child[0]); /* This takes care of arguments */
         --flag_callArguments;
         break;
-      }
       }
       break;
     case DeclK:
@@ -372,23 +347,33 @@ void typeCheck(TreeNode *t)
         t->type = Integer;
         break;
       case VarK:
+        if (t->symbol->symbol_class == Function)
+            typeError(t, "used a function like a variable");
+        else if (!flag_callArguments) {
+          if (t->symbol->is_array)
+            typeError(t, "used an array like a variable");
+        }
         t->type = t->symbol->type;
         break;
       case ArrK:
         typeCheck(t->child[0]);
+        if(!t->symbol->is_array)
+          typeError(t, "used a non-array like a array");
         if ((t->child[0]->type != Integer))
           typeError(t, "Array index in not integer");
         t->type = t->symbol->type;
         break;
       case CallK:
-      {
         typeCheck(t->child[0]);;
+        if(t->symbol->symbol_class != Function) {
+          typeError(t, "used a non-function like a function");
+          break;
+        }
         t->type = t->symbol->type;
         
         /* Check number and type of arguments for function call */
         checkArguments(t->symbol->treeNode, t);
         break;
-      }
       }
       break;
     case DeclK:
