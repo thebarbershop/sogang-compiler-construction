@@ -13,7 +13,7 @@
 
 static void typeError(TreeNode *t, const char *message)
 {
-  fprintf(listing, "Type error at line %d: %s\n", t->lineno, message);
+  fprintf(listing, "Type error at line %d: \'%s\' %s\n", t->lineno, t->attr.name, message);
   Error = TRUE;
 }
 
@@ -33,7 +33,7 @@ static void semanticError(TreeNode *t, const char *message)
 }
 
 static int flag_functionDeclared = FALSE;
-static int flag_callArguments = FALSE;
+static int flag_callArguments = 0;
 static TreeNode* node_currentFunction = NULL;
 /* Procedure insertNode inserts 
  * identifiers stored in t into 
@@ -364,7 +364,9 @@ void typeCheck(TreeNode *t)
         t->type = t->symbol->type;
         break;
       case CallK:
-        typeCheck(t->child[0]);;
+        ++flag_callArguments;
+        typeCheck(t->child[0]);
+        --flag_callArguments;
         if(t->symbol->symbol_class != Function) {
           typeError(t, "used a non-function like a function");
           break;
