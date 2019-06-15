@@ -14,6 +14,7 @@
 #include <string.h>
 #include "symtab.h"
 #include "parse.h"
+#include "util.h"
 
 /* the hash function which returns a number in [0, SIZE) */
 static int hash(const char *key)
@@ -261,55 +262,87 @@ void setCurrentScopeMemoryLocation(int location) {
   currentScopeSymbolTable->location = location;
 }
 
-/* Adds global symbols for pre-defined IO functions */
-void addIOSymbols(void) {
+static TreeNode* IOtreeNodes;
+/* Adds global symbols for pre-defined IO functions.
+ * Returns pointer to input function node,
+ * whose sibling is the output function node. */
+void addIO(void) {
   int memloc_coeff = -1; /* positive offset for parameters; negative otherwise */
+  TreeNode *inputNode, *outputNode;
+  char * buffer;
 
   {
     /* Register int input(void); to global symbol table */
-    BucketList symbol = st_insert("input", -1, currentScopeSymbolTable->location);
+    buffer = malloc(sizeof(char)*6);
+    strncpy(buffer, "input", 6);
+    BucketList symbol = st_insert(buffer, -1, currentScopeSymbolTable->location);
     currentScopeSymbolTable->location += memloc_coeff*WORD_SIZE;
     symbol->symbol_class = Function;
     symbol->is_array = FALSE;
     symbol->type = Integer;
 
     /* Create a dummy tree node for input */
-    TreeNode *treeNode = newDeclNode(FunDeclK);
+    inputNode = newDeclNode(FunDeclK);
     TreeNode *typeNode = newTypeNode(TypeGeneralK);
     TreeNode *paramNode = newParamNode(VoidParamK);
     TreeNode *stmtNode = newStmtNode(CompoundK);
-    treeNode->lineno = typeNode->lineno = paramNode->lineno = stmtNode->lineno = -1;
-    treeNode->child[0] = typeNode;
-    treeNode->child[1] = paramNode;
-    treeNode->child[2] = stmtNode;
+    inputNode->lineno = typeNode->lineno = paramNode->lineno = stmtNode->lineno = -1;
+    inputNode->child[0] = typeNode;
+    inputNode->child[1] = paramNode;
+    inputNode->child[2] = stmtNode;
+    inputNode->attr.name = "input";
     typeNode->type = Integer;
-    symbol->treeNode = treeNode;
+    symbol->treeNode = inputNode;
+    inputNode->symbol = symbol;
   }
 
   {
     /* Register void output(int num); to global symbol table */
-    BucketList symbol = st_insert("output", -1, currentScopeSymbolTable->location);
+    buffer = malloc(sizeof(char)*7);
+    strncpy(buffer, "output", 7);
+    BucketList symbol = st_insert(buffer, -1, currentScopeSymbolTable->location);
     currentScopeSymbolTable->location += memloc_coeff*WORD_SIZE;
     symbol->symbol_class = Function;
     symbol->is_array = FALSE;
     symbol->type = Void;
 
     /* Create a dummy tree node for output */
-    TreeNode *treeNode = newDeclNode(FunDeclK);
+    outputNode = newDeclNode(FunDeclK);
     TreeNode *typeNode = newTypeNode(TypeGeneralK);
     TreeNode *paramNode = newParamNode(VarParamK);
     TreeNode *stmtNode = newStmtNode(CompoundK);
     TreeNode *paramTypeNode = newTypeNode(TypeGeneralK);
-    treeNode->lineno = typeNode->lineno = paramNode->lineno = stmtNode->lineno = -1;
-    treeNode->child[0] = typeNode;
-    treeNode->child[1] = paramNode;
-    treeNode->child[2] = stmtNode;
+    BucketList paramSymbol = malloc(sizeof(struct BucketListRec));
+    outputNode->lineno = typeNode->lineno = paramNode->lineno = stmtNode->lineno = -1;
+    outputNode->child[0] = typeNode;
+    outputNode->child[1] = paramNode;
+    outputNode->child[2] = stmtNode;
+    outputNode->attr.name = "output";
     typeNode->type = Void;
     paramNode->child[0] = paramTypeNode;
     paramNode->type = Integer;
     paramNode->attr.name = "num";
+    paramNode->symbol = paramSymbol;
     paramTypeNode->type = Integer;
+    paramSymbol->treeNode = paramNode;
+    paramSymbol->array_size = 0;
+    paramSymbol->is_array = FALSE;
+    paramSymbol->lines = NULL;
+    paramSymbol->memloc = 4;
+    buffer = malloc(sizeof(char)*4);
+    strncpy(buffer, "num", 4);
+    paramSymbol->name = buffer;
+    paramSymbol->symbol_class = Parameter;
+    paramSymbol->type = Integer;
 
-    symbol->treeNode = treeNode;
+    symbol->treeNode = outputNode;
+    outputNode->symbol = symbol;
   }
+
+  inputNode->sibling = outputNode;
+  IOtreeNodes = inputNode;
+}
+
+void destroyIO(void) {
+  destroyTree(IOtreeNodes); 
 }

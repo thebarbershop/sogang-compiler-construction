@@ -49,7 +49,12 @@ BucketList lookupSymbol(TreeNode *t);
 /* set memory location of current symbol table */
 void setCurrentScopeMemoryLocation(int);
 
-/* Adds global symbols for pre-defined IO functions */
-void addIOSymbols(void);
+/* Adds global symbols for pre-defined IO functions.
+ * Leaves TreeNode pointer 'IOTreeNodes' to input function,
+ * whose sibling is the output function. */
+void addIO(void);
+
+/* Destroys IO tree nodes. */
+void destroyIO(void);
 
 #endif
