@@ -1,6 +1,6 @@
 CC = gcc
 
-CFLAGS=-std=c11 -Wall -Werror -O3 -Wpedantic
+CFLAGS=-std=c11 -Wall -Werror -ggdb -O0 -Wpedantic
 
 .SUFFIXES: .c .o
 

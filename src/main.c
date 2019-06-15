@@ -126,6 +126,7 @@ int main(int argc, char *argv[])
     strncpy(codefile, pgm, fnlen);
     strcat(codefile, ".tm");
     code = fopen(codefile, "w");
+    fclose(code); code = stdout;
     if (code == NULL)
     {
       printf("Unable to open %s\n", codefile);
