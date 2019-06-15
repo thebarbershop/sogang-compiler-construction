@@ -18,6 +18,14 @@ static int emitLoc = 0 ;
    emitBackup, and emitRestore */
 static int highEmitLoc = 0;
 
+/* Procedure emitBlank prints a blank line
+ * in the code file.
+ */
+void emitBlank(void)
+{
+  if (TraceCode) fprintf(code, "\n");
+}
+
 /* Procedure emitComment prints a comment line 
  * with comment c in the code file
  */
@@ -30,7 +38,7 @@ void emitComment( char * c )
 void emitCode(char *codeLine, char *comment)
 {
  fprintf(code, "%s", codeLine);
- if(TraceCode && comment) fprintf(code, "\t# %s", comment);
+ if(TraceCode && comment && comment[0]) fprintf(code, "\t# %s", comment);
  fprintf(code, "\n"); 
 }
 

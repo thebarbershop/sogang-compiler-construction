@@ -32,6 +32,11 @@
 
 /* code emitting utilities */
 
+/* Procedure emitBlank prints a blank line
+ * in the code file.
+ */
+void emitBlank(void);
+
 /* Procedure emitComment prints a comment line 
  * with comment c in the code file
  */

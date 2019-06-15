@@ -12,14 +12,16 @@
 #include "code.h"
 #include "cgen.h"
 
+/* Procedure cGen recursively generates code by
+ * tree traversal
+ */
+static void cGen(TreeNode *tree);
+
 /* tmpOffset is the memory offset for temps
    It is decremented each time a temp is
    stored, and incremeted when loaded again
 */
 // static int tmpOffset = 0;
-
-/* prototype for internal recursive code generator */
-static void cGen (TreeNode * tree);
 
 /* Procedure genStmt generates code at a statement node */
 static void genStmt( TreeNode * tree)
@@ -185,6 +187,9 @@ static void cGen( TreeNode * tree)
   }
 }
 
+
+enum { NONE, TEXT, DATA } globalEmitMode = NONE;
+
 /* Procedure declareGlobalVariable generates code for
  * global variable declaration
  */
@@ -192,40 +197,75 @@ const unsigned int ALIGN = 2; /* align memory to 2^(ALIGN) */
 static void declareGlobalVariable(char *name, int size)
 {
   char *buff = malloc(strlen(name) + 32);
-  emitCode(".data", NULL);
+  sprintf(buff, "global variable %s", name);
+  if(globalEmitMode == DATA)
+    emitComment(buff);
+  else
+  {
+    globalEmitMode = DATA;
+    emitCode(".data", buff);
+  }
   sprintf(buff, ".align %d", ALIGN);
   emitCode(buff, "align on a word boundary");
   sprintf(buff, "_%s: .space %d", name, size);
   emitCode(buff, "reserve space for variable");
   free(buff);
+  emitBlank();
+}
+
+static void declareFunction(TreeNode *node)
+{
+  /* Function Preamble */
+  char *buff = malloc(strlen(node->attr.name) + 37);
+  sprintf(buff, "procedure for function \'%s\'", node->attr.name);
+  if(globalEmitMode == TEXT)
+    emitComment(buff);
+  else {
+    globalEmitMode = TEXT;
+    emitCode(".text", buff);
+  }
+
+  if(!strcmp(node->attr.name, "main"))
+  {
+    emitCode(".globl main", "");
+    emitCode("main:", "");
+  }
+  else
+  {
+    sprintf(buff, "_%s:", node->attr.name);
+    emitCode(buff, "");
+  }
+  free(buff);
+  emitBlank();
 }
 
 /* Procedure cGenGlobal generates code for
  * the global scope
  */
-static void cGenGlobal(TreeNode *tree)
+static void cGenGlobal(TreeNode *node)
 {
-  if (tree != NULL)
+  if (node != NULL)
   {
-    if(tree->nodekind == DeclK) {
-      switch(tree->kind.decl) {
+    if(node->nodekind == DeclK) {
+      switch(node->kind.decl) {
         case VarDeclK:
-          declareGlobalVariable(tree->attr.name, WORD_SIZE);
+          declareGlobalVariable(node->attr.name, WORD_SIZE);
           break;
         case ArrDeclK:
-          declareGlobalVariable(tree->attr.name, WORD_SIZE*tree->child[1]->attr.val);
+          declareGlobalVariable(node->attr.name, WORD_SIZE*node->child[1]->attr.val);
           break;
         case FunDeclK:
-          cGen(NULL);
+          declareFunction(node);
           break;
       }
     }
     else {
       fprintf(listing, "something wrong in global nodes\n");
-      fprintf(listing, "lineno: %d\n, nodekind: %d\n", tree->lineno, tree->nodekind);
+      fprintf(listing, "lineno: %d\n, nodekind: %d\n", node->lineno, node->nodekind);
       Error = TRUE;
     }
-    cGenGlobal(tree->sibling);
+    cGenGlobal(node->sibling);
+    cGen(NULL);
   }
 }
 
