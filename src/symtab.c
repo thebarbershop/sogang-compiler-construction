@@ -251,8 +251,19 @@ void incrementScope(void)
 /* decrement scope */
 void decrementScope(void)
 {
+  int i;
   /* Move symbol table pointer to previous scope */
   SymbolTable tableToDelete = currentScopeSymbolTable;
+  for(i = 0; i < HASHTABLE_SIZE; ++i) {
+    while(tableToDelete->hashTable[i]) {
+      while(tableToDelete->hashTable[i]->lines) {
+        LineList lineToDestroy = tableToDelete->hashTable[i]->lines;
+        tableToDelete->hashTable[i]->lines = tableToDelete->hashTable[i]->lines->next;
+        free(lineToDestroy);
+      }
+      tableToDelete->hashTable[i] = tableToDelete->hashTable[i]->next;
+    }
+  }
   currentScopeSymbolTable = currentScopeSymbolTable->prev;
   free(tableToDelete);
 }

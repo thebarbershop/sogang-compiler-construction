@@ -254,11 +254,8 @@ static void destroySymbol(BucketList symbol) {
     return;
   if(symbol->name)
     free(symbol->name);
-  while(symbol->lines) {
-    LineList lineToDestroy = symbol->lines;
-    symbol->lines = symbol->lines->next;
-    free(lineToDestroy);
-  }
+  /* line list is already destroyed
+   * when scope table is destroyed */
   free(symbol);
 }
 
