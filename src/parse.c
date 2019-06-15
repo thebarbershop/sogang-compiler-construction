@@ -6,6 +6,7 @@
 /****************************************************/
 
 #include "parse.h"
+#include "util.h"
 
 /* Function newStmtNode creates a new statement
  * node for syntax tree construction
@@ -25,6 +26,7 @@ TreeNode *newStmtNode(StmtKind kind)
     t->kind.stmt = kind;
     t->lineno = lineno;
   }
+  addPtr(t);
   return t;
 }
 
@@ -47,6 +49,7 @@ TreeNode *newExpNode(ExpKind kind)
     t->lineno = lineno;
     t->type = Void;
   }
+  addPtr(t);
   return t;
 }
 
@@ -69,6 +72,7 @@ TreeNode *newDeclNode(DeclKind kind)
     t->lineno = lineno;
     t->symbol = NULL;
   }
+  addPtr(t);
   return t;
 }
 
@@ -87,6 +91,7 @@ TreeNode *newTypeNode(TypeKind kind)
     t->kind.type = kind;
     t->lineno = lineno;
   }
+  addPtr(t);
   return t;
 }
 
@@ -105,5 +110,6 @@ TreeNode *newParamNode(ParamKind kind)
     t->kind.param = kind;
     t->lineno = lineno;
   }
+  addPtr(t);
   return t;
 }

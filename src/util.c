@@ -76,6 +76,35 @@ void printToken(TokenType token, const char *tokenString)
 }
 
 
+/* Linked list of allocated memory pointers */
+typedef struct _ptrList {
+   void *ptr;
+   struct _ptrList *next;
+} PtrList;
+
+PtrList* ptrList;
+
+/* Maintains list of allocated memory pointers */
+void addPtr(void* ptr) {
+    PtrList *newPtr = malloc(sizeof(struct _ptrList));
+    newPtr->ptr = ptr;
+    newPtr->next = ptrList;
+    ptrList = newPtr;
+}
+
+/* Destroys allocated memory pointers */
+void destroyPtr(void) {
+  PtrList *nodeToDestroy;
+  while(ptrList) {
+    nodeToDestroy = ptrList;
+    if(nodeToDestroy->ptr) {
+      free(nodeToDestroy->ptr);
+    }
+    ptrList = ptrList->next;
+    free(nodeToDestroy);
+  }
+}
+
 /* Function copyString allocates and makes a new
  * copy of an existing string
  */
@@ -89,8 +118,10 @@ char *copyString(char *s)
   t = malloc((size_t)n);
   if (t == NULL)
     fprintf(listing, "Out of memory error at line %d\n", lineno);
-  else
+  else {
     strcpy(t, s);
+    addPtr(t);
+  }
   return t;
 }
 
@@ -247,42 +278,6 @@ char *getOp(TokenType op) {
     case NEQ:   return "!=";
   }
   return "";
-}
-
-static void destroySymbol(BucketList symbol) {
-  if(!symbol)
-    return;
-  if(symbol->name)
-    free(symbol->name);
-  /* line list is already destroyed
-   * when scope table is destroyed */
-  free(symbol);
-}
-
-/* recursively free syntax tree nodes and related pointers */
-void destroyTree(TreeNode * node) {
-  int i;
-  if(!node)
-    return;
-  for(i = 0; i < MAXCHILDREN; i++)
-    destroyTree(node->child[i]);
-  destroyTree(node->sibling);
-  if(node->nodekind==DeclK || (node->nodekind == ParamK && node->kind.param != VoidParamK)) {
-    destroySymbol(node->symbol);
-  }
-  if(node->nodekind==ExpK) {
-    switch(node->kind.exp) {
-      case VarK:
-      case ArrK:
-      case CallK:
-        if(node->attr.name)
-          free(node->attr.name);
-        break;
-      default:
-        break;
-    }
-  }
-  free(node);
 }
 
 /* Returns the position of last dot

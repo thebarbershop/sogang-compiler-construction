@@ -41,17 +41,16 @@ FILE *code;
 
 /* allocate and set tracing flags */
 int TraceScan = FALSE;
-int TraceParse = TRUE;
-int TraceAnalyze = TRUE;
+int TraceParse = FALSE;
+int TraceAnalyze = FALSE;
 int TraceCode = TRUE;
 
 int Error = FALSE;
 
 static TreeNode *syntaxTree;
 static void cleanup(void) {
-  destroyTree(syntaxTree);
   yylex_destroy();
-  destroyIO();
+  destroyPtr();
 }
 int main(int argc, char *argv[])
 {

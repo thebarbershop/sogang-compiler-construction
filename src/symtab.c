@@ -95,6 +95,7 @@ static BucketList st_insert(char *name, int lineno, int loc)
   if (l == NULL) /* symbol not yet in table */
   {
     l = malloc(sizeof(struct BucketListRec));
+    addPtr(l);
     l->name = name;
     l->lines = malloc(sizeof(struct LineListRec));
     l->lines->lineno = lineno;
@@ -286,6 +287,7 @@ void addIO(void) {
     /* Register int input(void); to global symbol table */
     buffer = malloc(sizeof(char)*6);
     strncpy(buffer, "input", 6);
+    addPtr(buffer);
     BucketList symbol = st_insert(buffer, -1, currentScopeSymbolTable->location);
     currentScopeSymbolTable->location += memloc_coeff*WORD_SIZE;
     symbol->symbol_class = Function;
@@ -311,6 +313,7 @@ void addIO(void) {
     /* Register void output(int num); to global symbol table */
     buffer = malloc(sizeof(char)*7);
     strncpy(buffer, "output", 7);
+    addPtr(buffer);
     BucketList symbol = st_insert(buffer, -1, currentScopeSymbolTable->location);
     currentScopeSymbolTable->location += memloc_coeff*WORD_SIZE;
     symbol->symbol_class = Function;
@@ -324,6 +327,7 @@ void addIO(void) {
     TreeNode *stmtNode = newStmtNode(CompoundK);
     TreeNode *paramTypeNode = newTypeNode(TypeGeneralK);
     BucketList paramSymbol = malloc(sizeof(struct BucketListRec));
+    addPtr(paramSymbol);
     outputNode->lineno = typeNode->lineno = paramNode->lineno = stmtNode->lineno = -1;
     outputNode->child[0] = typeNode;
     outputNode->child[1] = paramNode;
@@ -342,6 +346,7 @@ void addIO(void) {
     paramSymbol->memloc = 4;
     buffer = malloc(sizeof(char)*4);
     strncpy(buffer, "num", 4);
+    addPtr(buffer);
     paramSymbol->name = buffer;
     paramSymbol->symbol_class = Parameter;
     paramSymbol->type = Integer;
@@ -352,8 +357,4 @@ void addIO(void) {
 
   inputNode->sibling = outputNode;
   IOtreeNodes = inputNode;
-}
-
-void destroyIO(void) {
-  destroyTree(IOtreeNodes); 
 }

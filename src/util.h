@@ -31,9 +31,6 @@ void printTree(TreeNode *);
 /* function getToken returns the next token in source file */
 TokenType getToken(void);
 
-/* Free all ast nodes and related pointers */
-void destroyTree(TreeNode *);
-
 /* Destroys all memory used by scanner.
  * Implemented in lex.yy.c */
 int yylex_destroy(void);
@@ -41,5 +38,11 @@ int yylex_destroy(void);
 /* Returns the position of last dot
  * If no dot in string, returns length of it */
 int getBaseIndex(const char *fullPath);
+
+/* Maintains list of allocated memory pointers */
+void addPtr(void *ptr);
+
+/* Destroys allocated memory pointers */
+void destroyPtr(void);
 
 #endif

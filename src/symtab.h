@@ -54,7 +54,4 @@ void setCurrentScopeMemoryLocation(int);
  * whose sibling is the output function. */
 void addIO(void);
 
-/* Destroys IO tree nodes. */
-void destroyIO(void);
-
 #endif
