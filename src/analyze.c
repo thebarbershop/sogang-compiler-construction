@@ -34,7 +34,7 @@ static void semanticError(TreeNode *t, const char *message)
 
 static int flag_functionDeclared = FALSE;
 static int flag_callArguments = FALSE;
-static TreeNode* node_currentFunction;
+static TreeNode* node_currentFunction = NULL;
 /* Procedure insertNode inserts 
  * identifiers stored in t into 
  * the symbol table 
@@ -54,7 +54,7 @@ static void insertNode(TreeNode *t)
           int function_scope = TRUE;
           if(!flag_functionDeclared)
           {
-            incrementScope(t);
+            incrementScope();
             scope_incremented = TRUE;
             function_scope = FALSE;
           }
@@ -155,7 +155,7 @@ static void insertNode(TreeNode *t)
       case FunDeclK:
         node_currentFunction = t;
         registerSymbol(t, Function, FALSE, t->child[0]->type);
-        incrementScope(t);
+        incrementScope();
         insertNode(t->child[0]);
         setCurrentScopeMemoryLocation(4);   /* memory offset for paramters starts before control link */
         insertNode(t->child[1]);            /* This child takes care of parameter declarations */
