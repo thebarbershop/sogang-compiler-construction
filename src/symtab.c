@@ -235,7 +235,7 @@ void initSymTab(void)
 }
 
 /* increment current scope */
-void incrementScope(TreeNode *t)
+void incrementScope(void)
 {
   SymbolTable newSymbolTable = malloc(sizeof(struct SymbolTableRec));
   newSymbolTable->depth = currentScopeSymbolTable->depth + 1;

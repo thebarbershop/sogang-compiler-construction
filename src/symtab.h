@@ -35,7 +35,7 @@ void printSymTab(FILE *listing);
 void initSymTab(void);
 
 /* increment current scope */
-void incrementScope(TreeNode *t);
+void incrementScope(void);
 
 /* decrement scope */
 void decrementScope(void);
