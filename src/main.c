@@ -134,6 +134,7 @@ int main(int argc, char *argv[])
     }
     codeGen(syntaxTree, codefile);
     fclose(code);
+    free(codefile);
   }
 #endif
 #endif
