@@ -47,11 +47,16 @@ int TraceCode = TRUE;
 
 int Error = FALSE;
 
+static TreeNode *syntaxTree;
+static void cleanup(void) {
+  destroyTree(syntaxTree);
+  yylex_destroy();
+  destroyIO();
+}
 int main(int argc, char *argv[])
 {
   int i;
   #if !NO_PARSE
-  TreeNode *syntaxTree;
   TreeNode *mainNode;
   #endif
   char pgm[120]; /* source code file name */
@@ -134,8 +139,7 @@ int main(int argc, char *argv[])
 #endif
 #endif
   fclose(source);
-  destroyTree(syntaxTree);
-  yylex_destroy();
+  cleanup();
 
   return 0;
 }
