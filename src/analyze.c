@@ -445,7 +445,9 @@ void typeCheck(TreeNode *t)
 TreeNode* mainCheck(TreeNode * node) {
   while(node) {
     if(!strcmp(node->attr.name, "main")) {
-      if(node->type != Void)
+      if(node->nodekind != DeclK || node->kind.decl != FunDeclK)
+        semanticError(node, "\'main\' should be a function.");
+      else if(node->type != Void)
         semanticError(node, "Return type of function \'main\' must be void.");
       else if(node->child[1]->kind.param != VoidParamK)
         semanticError(node, "Parameter of function \'main\' must be void.");
