@@ -10,8 +10,6 @@
 #ifndef _CODE_H_
 #define _CODE_H_
 
-/* code emitting utilities */
-
 /* Procedure emitBlank prints a blank line
  * in the code file.
  */
