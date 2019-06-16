@@ -62,3 +62,30 @@ void emitRegRegImm(char *op, char *reg1, char *reg2, int imm, char *comment)
   fprintf(code, "%s %s %s %d", op, reg1, reg2, imm);
   emitComment(comment);
 }
+
+/* Procedure emitRegRegReg prints a code line
+ * that takes one register
+ */
+void emitReg(char *op, char *reg, char *comment)
+{
+  fprintf(code, "%s %s", op, reg);
+  emitComment(comment);
+}
+
+/* Procedure emitRegRegReg prints a code line
+ * that takes two registers
+ */
+void emitRegReg(char *op, char *reg1, char *reg2, char *comment)
+{
+  fprintf(code, "%s %s %s", op, reg1, reg2);
+  emitComment(comment);
+}
+
+/* Procedure emitRegRegReg prints a code line
+ * that takes three registers
+ */
+void emitRegRegReg(char *op, char *reg1, char *reg2, char *reg3, char *comment)
+{
+  fprintf(code, "%s %s %s %s", op, reg1, reg2, reg3);
+  emitComment(comment);
+}

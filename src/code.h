@@ -36,8 +36,22 @@ void emitRegImm(char *op, char *reg, int imm, char *comment);
 void emitRegAddr(char *op, char *reg1, int offset, char *reg2, char *comment);
 
 /* Procedure emitRegAddr prints a code line
- * that takes two register and one immidiate
+ * that takes two registers and one immidiate
  */
 void emitRegRegImm(char *op, char *reg1, char *reg2, int imm, char *comment);
 
+/* Procedure emitRegRegReg prints a code line
+ * that takes one register
+ */
+void emitReg(char *op, char *reg, char *comment);
+
+/* Procedure emitRegRegReg prints a code line
+ * that takes two registers
+ */
+void emitRegReg(char *op, char *reg1, char *reg2, char *comment);
+
+/* Procedure emitRegRegReg prints a code line
+ * that takes three registers
+ */
+void emitRegRegReg(char *op, char *reg1, char *reg2, char *reg3, char *comment);
 #endif
