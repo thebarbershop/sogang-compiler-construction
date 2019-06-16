@@ -12,10 +12,13 @@
 #include "code.h"
 #include "cgen.h"
 
-/* Procedure cGen recursively generates code by
- * tree traversal
- */
-static void cGen(TreeNode *tree);
+/* prototypes for code generation functions */
+static void cgen(TreeNode *tree);
+static void cgenStmt( TreeNode * tree);
+static void cgenExp( TreeNode * tree);
+static void cgenDecl(TreeNode *tree);
+static void cgenCompound(TreeNode *tree);
+static void cgenPop(char *reg);
 
 /* tmpOffset is the memory offset for temps
    It is decremented each time a temp is
@@ -23,187 +26,145 @@ static void cGen(TreeNode *tree);
 */
 // static int tmpOffset = 0;
 
-/* Procedure genStmt generates code at a statement node */
-static void genStmt( TreeNode * tree)
-{ 
-  // TreeNode * p1, * p2, * p3;
-  // int savedLoc1,savedLoc2,currentLoc;
-  // int loc;
-  // switch (tree->kind.stmt) {
-  //     case IfK :
-  //        if (TraceCode) emitComment("-> if") ;
-  //        p1 = tree->child[0] ;
-  //        p2 = tree->child[1] ;
-  //        p3 = tree->child[2] ;
-  //        /* generate code for test expression */
-  //        cGen(p1);
-  //        savedLoc1 = emitSkip(1) ;
-  //        emitComment("if: jump to else belongs here");
-  //        /* recurse on then part */
-  //        cGen(p2);
-  //        savedLoc2 = emitSkip(1) ;
-  //        emitComment("if: jump to end belongs here");
-  //        currentLoc = emitSkip(0) ;
-  //        emitBackup(savedLoc1) ;
-  //        emitRM_Abs("JEQ",ac,currentLoc,"if: jmp to else");
-  //        emitRestore() ;
-  //        /* recurse on else part */
-  //        cGen(p3);
-  //        currentLoc = emitSkip(0) ;
-  //        emitBackup(savedLoc2) ;
-  //        emitRM_Abs("LDA",pc,currentLoc,"jmp to end") ;
-  //        emitRestore() ;
-  //        if (TraceCode)  emitComment("<- if") ;
-  //        break; /* if_k */
-
-  //     case RepeatK:
-  //        if (TraceCode) emitComment("-> repeat") ;
-  //        p1 = tree->child[0] ;
-  //        p2 = tree->child[1] ;
-  //        savedLoc1 = emitSkip(0);
-  //        emitComment("repeat: jump after body comes back here");
-  //        /* generate code for body */
-  //        cGen(p1);
-  //        /* generate code for test */
-  //        cGen(p2);
-  //        emitRM_Abs("JEQ",ac,savedLoc1,"repeat: jmp back to body");
-  //        if (TraceCode)  emitComment("<- repeat") ;
-  //        break; /* repeat */
-
-  //     case AssignK:
-  //        if (TraceCode) emitComment("-> assign") ;
-  //        /* generate code for rhs */
-  //        cGen(tree->child[0]);
-  //        /* now store value */
-  //        loc = st_lookup(tree->attr.name);
-  //        emitRM("ST",ac,loc,gp,"assign: store value");
-  //        if (TraceCode)  emitComment("<- assign") ;
-  //        break; /* assign_k */
-
-  //     case ReadK:
-  //        emitRO("IN",ac,0,0,"read integer value");
-  //        loc = st_lookup(tree->attr.name);
-  //        emitRM("ST",ac,loc,gp,"read: store value");
-  //        break;
-  //     case WriteK:
-  //        /* generate code for expression to write */
-  //        cGen(tree->child[0]);
-  //        /* now output it */
-  //        emitRO("OUT",ac,0,0,"write ac");
-  //        break;
-  //     default:
-  //        break;
-  //   }
-} /* genStmt */
-
-/* Procedure genExp generates code at an expression node */
-static void genExp( TreeNode * tree)
+/* Procedure cgenStmt generates code at a statement node */
+static void cgenStmt( TreeNode * tree)
 {
+  switch(tree->kind.stmt) {
+  case CompoundK:
+    cgenCompound(tree);
+    break;
+  case SelectionK:
+    /* NOT IMPLEMENTED */
+    break;
+  case IterationK:
+    /* NOT IMPLEMENTED */
+    break;
+  case ReturnK:
+    /* NOT IMPLEMENTED */
+    break;
+  }
+} /* cgenStmt */
+
+/* Procedure cgenExp generates code at an expression node
+ * value of expression will be on top of stack */
+static void cgenExp( TreeNode * tree)
+{
+  char *buff = malloc(65);
   // int loc;
   // TreeNode * p1, * p2;
-  // switch (tree->kind.exp) {
+  switch (tree->kind.exp) {
+    case AssignK:
+      /* NOT IMPLEMENTED */
+      break;
+    case OpK:
+      /* NOT IMPLEMENTED */
+      break;
+    case ConstK :
+      sprintf(buff, "->Const");
+      emitComment(buff);
+      emitRegImm("li", "$t0", tree->attr.val, "");
+      emitRegAddr("sw", "$t0", 0, "$sp", "");
+      emitRegRegImm("subu", "$sp", "$sp", 4, "");
+      sprintf(buff, "<-Const");
+      emitComment(buff);
 
-  //   case ConstK :
-  //     if (TraceCode) emitComment("-> Const") ;
-  //     /* gen code to load integer constant using LDC */
-  //     emitRM("LDC",ac,tree->attr.val,0,"load const");
-  //     if (TraceCode)  emitComment("<- Const") ;
-  //     break; /* ConstK */
-    
-  //   case IdK :
-  //     if (TraceCode) emitComment("-> Id") ;
-  //     loc = st_lookup(tree->attr.name);
-  //     emitRM("LD",ac,loc,gp,"load id value");
-  //     if (TraceCode)  emitComment("<- Id") ;
-  //     break; /* IdK */
+      break;
+    case VarK:
+      /* NOT IMPLEMENTED */
+      break;
+    case ArrK:
+      /* NOT IMPLEMENTED */
+      break;
+    case CallK:
+      if(!strcmp("input", tree->attr.name))
+      {
+        /* Read integer from stdin to $v0 */
+        /* NOT IMPLEMENTED */
+      }
+      else if(!strcmp("output", tree->attr.name))
+      {
+        sprintf(buff, "->output call");
+        emitComment(buff);
+        cgenExp(tree->child[0]);
+        cgenPop("$a0");
+        emitRegImm("li", "$v0", 1, "");
+        emitCode("syscall", "");
+        sprintf(buff, "<-output call");
+        emitComment(buff);
+      }
+      else
+      {
+        /* General function call */
+        /* NOT IMPLEMENTED */
+      }
+      break;
+  }
+  free(buff);
+} /* cgenExp */
 
-  //   case OpK :
-  //        if (TraceCode) emitComment("-> Op") ;
-  //        p1 = tree->child[0];
-  //        p2 = tree->child[1];
-  //        /* gen code for ac = left arg */
-  //        cGen(p1);
-  //        /* gen code to push left operand */
-  //        emitRM("ST",ac,tmpOffset--,mp,"op: push left");
-  //        /* gen code for ac = right operand */
-  //        cGen(p2);
-  //        /* now load left operand */
-  //        emitRM("LD",ac1,++tmpOffset,mp,"op: load left");
-  //        switch (tree->attr.op) {
-  //           case PLUS :
-  //              emitRO("ADD",ac,ac1,ac,"op +");
-  //              break;
-  //           case MINUS :
-  //              emitRO("SUB",ac,ac1,ac,"op -");
-  //              break;
-  //           case TIMES :
-  //              emitRO("MUL",ac,ac1,ac,"op *");
-  //              break;
-  //           case OVER :
-  //              emitRO("DIV",ac,ac1,ac,"op /");
-  //              break;
-  //           case LT :
-  //              emitRO("SUB",ac,ac1,ac,"op <") ;
-  //              emitRM("JLT",ac,2,pc,"br if true") ;
-  //              emitRM("LDC",ac,0,ac,"false case") ;
-  //              emitRM("LDA",pc,1,pc,"unconditional jmp") ;
-  //              emitRM("LDC",ac,1,ac,"true case") ;
-  //              break;
-  //           case EQ :
-  //              emitRO("SUB",ac,ac1,ac,"op ==") ;
-  //              emitRM("JEQ",ac,2,pc,"br if true");
-  //              emitRM("LDC",ac,0,ac,"false case") ;
-  //              emitRM("LDA",pc,1,pc,"unconditional jmp") ;
-  //              emitRM("LDC",ac,1,ac,"true case") ;
-  //              break;
-  //           default:
-  //              emitComment("BUG: Unknown operator");
-  //              break;
-  //        } /* case op */
-  //        if (TraceCode)  emitComment("<- Op") ;
-  //        break; /* OpK */
+/* Procedue cgenDecl generates code
+ * for local variable declarations */
+static void cgenDecl(TreeNode *tree)
+{
+  /* NOT IMPLEMENTED */
+} /* cgenDecl */
 
-  //   default:
-  //     break;
-  // }
-} /* genExp */
+/* Procedure cgenCompound generates code
+ * for compound statements */
+static void cgenCompound(TreeNode *tree)
+{
+  cgen(tree->child[0]);
+  cgen(tree->child[1]);
+} /* cgenCompound */
 
-/* Procedure cGen recursively generates code by
+/* Procedure cgen recursively generates code by
  * tree traversal
  */
-static void cGen( TreeNode * tree)
-{ if (tree != NULL)
-  { switch (tree->nodekind) {
+static void cgen(TreeNode * tree)
+{
+  if (tree != NULL)
+  {
+    switch (tree->nodekind) {
       case StmtK:
-        genStmt(tree);
+        cgenStmt(tree);
         break;
       case ExpK:
-        genExp(tree);
+        cgenExp(tree);
         break;
-      default:
+      case DeclK:
+        cgenDecl(tree);
+        break;
+      case TypeK:
+      case ParamK:
         break;
     }
-    cGen(tree->sibling);
+    cgen(tree->sibling);
   }
 }
 
+/* Procedure cgenPop generates code to
+ * pop the top of stack to register */
+static void cgenPop(char *reg)
+{
+  emitRegRegImm("addu", "$sp", "$sp", 4, "");
+  emitRegAddr("lw", reg, 0, "$sp", "");
+}
 
 enum { NONE, TEXT, DATA } globalEmitMode = NONE;
 
-/* Procedure declareGlobalVariable generates code for
+/* Procedure cgenGlobalVarDecl generates code for
  * global variable declaration
  */
 const unsigned int ALIGN = 2; /* align memory to 2^(ALIGN) */
-static void declareGlobalVariable(char *name, int size)
+static void cgenGlobalVarDecl(char *name, int size)
 {
   char *buff = malloc(strlen(name) + 32);
   sprintf(buff, "global variable %s", name);
-  if(globalEmitMode == DATA)
-    emitComment(buff);
-  else
+  emitComment(buff);
+  if(globalEmitMode != DATA)
   {
     globalEmitMode = DATA;
-    emitCode(".data", buff);
+    emitCode(".data", "");
   }
   sprintf(buff, ".align %d", ALIGN);
   emitCode(buff, "align on a word boundary");
@@ -213,16 +174,16 @@ static void declareGlobalVariable(char *name, int size)
   emitBlank();
 }
 
-static void declareFunction(TreeNode *node)
+static void cgenFunDecl(TreeNode *node)
 {
   /* Function Preamble */
   char *buff = malloc(strlen(node->attr.name) + 37);
   sprintf(buff, "procedure for function \'%s\'", node->attr.name);
-  if(globalEmitMode == TEXT)
-    emitComment(buff);
-  else {
+  emitComment(buff);
+  if(globalEmitMode != TEXT)
+  {
     globalEmitMode = TEXT;
-    emitCode(".text", buff);
+    emitCode(".text", "");
   }
 
   if(!strcmp(node->attr.name, "main"))
@@ -235,27 +196,30 @@ static void declareFunction(TreeNode *node)
     sprintf(buff, "_%s:", node->attr.name);
     emitCode(buff, "");
   }
+  cgenCompound(node->child[2]);
+  sprintf(buff, "end of function \'%s\'", node->attr.name);
+  emitComment(buff);
   free(buff);
   emitBlank();
 }
 
-/* Procedure cGenGlobal generates code for
+/* Procedure cgenGlobal generates code for
  * the global scope
  */
-static void cGenGlobal(TreeNode *node)
+static void cgenGlobal(TreeNode *node)
 {
   if (node != NULL)
   {
     if(node->nodekind == DeclK) {
       switch(node->kind.decl) {
         case VarDeclK:
-          declareGlobalVariable(node->attr.name, WORD_SIZE);
+          cgenGlobalVarDecl(node->attr.name, WORD_SIZE);
           break;
         case ArrDeclK:
-          declareGlobalVariable(node->attr.name, WORD_SIZE*node->child[1]->attr.val);
+          cgenGlobalVarDecl(node->attr.name, WORD_SIZE*node->child[1]->attr.val);
           break;
         case FunDeclK:
-          declareFunction(node);
+          cgenFunDecl(node);
           break;
       }
     }
@@ -264,8 +228,7 @@ static void cGenGlobal(TreeNode *node)
       fprintf(listing, "lineno: %d\n, nodekind: %d\n", node->lineno, node->nodekind);
       Error = TRUE;
     }
-    cGenGlobal(node->sibling);
-    cGen(NULL);
+    cgenGlobal(node->sibling);
   }
 }
 
@@ -285,7 +248,9 @@ void codeGen(TreeNode * syntaxTree, char * codefile)
    emitComment("C-Minus Compilation to SPIM Code");
    emitComment(s);
    free(s);
-   cGenGlobal(syntaxTree);
-   /* finish */
+   cgenGlobal(syntaxTree);
+   /* Exit routine. */
    emitComment("End of execution.");
+   emitRegImm("li", "$v0", 10, "");
+   emitCode("syscall", "");
 }
