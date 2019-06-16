@@ -1,10 +1,10 @@
 /****************************************************/
 /* File: cgen.c                                     */
-/* The code generator implementation                */
-/* for the TINY compiler                            */
-/* (generates code for the TM machine)              */
+/* The code generator interface to                  */
+/* the C-MINUS compiler                             */
 /* Compiler Construction: Principles and Practice   */
-/* Kenneth C. Louden                                */
+/* Kenneth C. Louden, 1997                          */
+/* Modified by Eom Taegyung                         */
 /****************************************************/
 
 #include "globals.h"
@@ -285,14 +285,7 @@ void codeGen(TreeNode * syntaxTree, char * codefile)
    emitComment("C-Minus Compilation to SPIM Code");
    emitComment(s);
    free(s);
-  //  /* generate standard prelude */
-  //  emitComment("Standard prelude:");
-  //  emitRM("LD",mp,0,ac,"load maxaddress from location 0");
-  //  emitRM("ST",ac,0,ac,"clear location 0");
-  //  emitComment("End of standard prelude.");
-   /* generate code for TINY program */
    cGenGlobal(syntaxTree);
    /* finish */
    emitComment("End of execution.");
-   // emitRO("HALT",0,0,0,"");
 }

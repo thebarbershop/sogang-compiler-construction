@@ -40,7 +40,7 @@ typedef int TokenType;
 
 extern FILE *source;  /* source code text file */
 extern FILE *listing; /* listing output text file */
-extern FILE *code;    /* code text file for TM simulator */
+extern FILE *code;    /* code text file for SPIM simulator */
 
 extern int lineno; /* source line number for listing */
 
@@ -202,7 +202,7 @@ extern int TraceParse;
 extern int TraceAnalyze;
 
 /* TraceCode = TRUE causes comments to be written
- * to the TM code file as code is generated
+ * to the SPIM code file as code is generated
  */
 extern int TraceCode;
 
