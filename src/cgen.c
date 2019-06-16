@@ -22,7 +22,9 @@ static void cgenDecl(TreeNode *tree);
 static void cgenCompound(TreeNode *tree);
 static void cgenPop(char *reg);
 static void cgenPush(char *reg);
-static void cgenPrintString(char *label);
+static void cgenString(char *label);
+static void cgenLabel(char *label);
+static char* getLabel(void);
 
 /* tmpOffset is the memory offset for temps
    It is decremented each time a temp is
@@ -38,8 +40,29 @@ static void cgenStmt( TreeNode * tree)
     cgenCompound(tree);
     break;
   case SelectionK:
-    /* NOT IMPLEMENTED */
+  {
+    char* followingLabel = getLabel();
+    emitComment("->selection");
+    cgenExp(tree->child[0]);
+    cgenPop("$t0");
+    if(tree->child[2])
+    { /* Has else statement */
+      char* elseLabel = getLabel();
+      emitRegReg("beqz", "$t0", elseLabel, "");
+      cgen(tree->child[1]);
+      emitReg("b", followingLabel, "");
+      cgenLabel(elseLabel);
+      cgen(tree->child[2]);
+    }
+    else
+    { /* No else statement */
+      emitRegReg("beqz", "$t0", followingLabel, "");
+      cgen(tree->child[1]);
+    }
+    cgenLabel(followingLabel);
+    emitComment("<-selection");
     break;
+  }
   case IterationK:
     /* NOT IMPLEMENTED */
     break;
@@ -77,19 +100,19 @@ static void cgenExp( TreeNode * tree)
       {
         /* Read integer from stdin to $v0 */
         emitComment("->input call");
-        cgenPrintString("_inputStr");
+        cgenString("_inputStr");
         /* NOT IMPLEMENTED */
         emitComment("<-input call");
       }
       else if(!strcmp("output", tree->attr.name))
       {
         emitComment("->output call");
-        cgenPrintString("_outputStr");
+        cgenString("_outputStr");
         cgenExp(tree->child[0]); /* evaluate parameter */
         cgenPop("$a0"); /* read parameter to $a0 */
         emitRegImm("li", "$v0", 1, ""); /* syscall #1: print int */
         emitCode("syscall", "");
-        cgenPrintString("_newline");
+        cgenString("_newline");
         emitComment("<-output call");
       }
       else
@@ -101,15 +124,15 @@ static void cgenExp( TreeNode * tree)
   }
 } /* cgenExp */
 
-/* Procedure cgenPrintString generates code
+/* Procedure cgenString generates code
  * to print null-terminated ascii string
  * from the given label */
-static void cgenPrintString(char *label)
+static void cgenString(char *label)
 {
   emitRegImm("li", "$v0", 4, ""); /* syscall #4: print string */
   emitRegReg("la", "$a0", label, "");
   emitCode("syscall", "");
-} /* cgenPrintString */
+} /* cgenString */
 
 /* Procedure cgenOp generates code
  * for an operator and leaves result
@@ -220,6 +243,16 @@ static void cgenPush(char *reg)
   emitRegRegImm("subu", "$sp", "$sp", 4, "");
 }
 
+/* Procedure cgenLabel generates code to
+ * define a label */
+static void cgenLabel(char *label)
+{
+  char *buff = malloc(strlen(label)+2);
+  sprintf(buff, "%s:", label);
+  emitCode(buff, "");
+  free(buff);
+}
+
 enum { TEXT, DATA } globalEmitMode = DATA;
 
 /* Procedure cgenIOStrings generates
@@ -311,6 +344,21 @@ static void cgenGlobal(TreeNode *node)
     }
     cgenGlobal(node->sibling);
   }
+}
+
+
+static char* getLabel(void)
+{
+  static int labelN = 0;
+
+  char* buff;
+  int tmp, lengthN;
+  for(lengthN = 0, tmp = labelN; tmp; ++lengthN)
+    tmp /= 10;
+  buff = malloc(lengthN+3);
+  sprintf(buff, "L%d", labelN++);
+  addPtr(buff);
+  return buff;
 }
 
 /**********************************************/
