@@ -26,12 +26,6 @@ static void cgenString(char *label);
 static void cgenLabel(char *label);
 static char* getLabel(void);
 
-/* tmpOffset is the memory offset for temps
-   It is decremented each time a temp is
-   stored, and incremeted when loaded again
-*/
-// static int tmpOffset = 0;
-
 /* Procedure cgenStmt generates code at a statement node */
 static void cgenStmt( TreeNode * tree)
 {
@@ -64,8 +58,19 @@ static void cgenStmt( TreeNode * tree)
     break;
   }
   case IterationK:
-    /* NOT IMPLEMENTED */
+  {
+    char* conditionLabel = getLabel();
+    char* followingLabel = getLabel();
+    emitComment("->iteration");
+    cgenLabel(conditionLabel);
+    cgenExp(tree->child[0]);
+    cgenPop("$t0");
+    emitRegReg("beqz", "$t0", followingLabel, "");
+    cgen(tree->child[1]);
+    cgenLabel(followingLabel);
+    emitComment("<-iteration");
     break;
+  }
   case ReturnK:
     /* NOT IMPLEMENTED */
     break;
@@ -349,7 +354,7 @@ static void cgenGlobal(TreeNode *node)
 
 static char* getLabel(void)
 {
-  static int labelN = 0;
+  static unsigned int labelN = 0;
 
   char* buff;
   int tmp, lengthN;
