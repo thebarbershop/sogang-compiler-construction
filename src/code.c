@@ -10,82 +10,66 @@
 #include "globals.h"
 #include "code.h"
 
-/* Procedure emitBlank prints a blank line
- * in the code file.
- */
-void emitBlank(void)
-{
-  if (TraceCode) fprintf(code, "\n");
-}
-
 /* Procedure emitComment prints a comment line 
  * with comment c in the code file
  */
 void emitComment( char * c )
-{ if (TraceCode && c && c[0]) fprintf(code,"# %s",c);
-  fprintf(code, "\n");
+{ if (TraceCode && c && c[0]) fprintf(code,"# %s\n",c);
 }
 
 /* Procedure emitCode prints a code line */
-void emitCode(char *codeLine, char *comment)
+void emitCode(char *codeLine)
 {
- fprintf(code, "%s", codeLine);
- emitComment(comment);
+ fprintf(code, "%s\n", codeLine);
 }
 
 /* Procedure emitRegImm prints a code line
  * that takes one register and one immidiate
  */
-void emitRegImm(char *op, char *reg, int imm, char* comment)
+void emitRegImm(char *op, char *reg, int imm)
 {
-  fprintf(code, "%s %s %d", op, reg, imm);
-  emitComment(comment);
+  fprintf(code, "%s %s %d\n", op, reg, imm);
 }
 
 /* Procedure emitRegAddr prints a code line
  * that takes one register and one address
  */
-void emitRegAddr(char *op, char *reg1, int offset, char *reg2, char *comment)
+void emitRegAddr(char *op, char *reg1, int offset, char *reg2)
 {
   fprintf(code, "%s %s ", op, reg1);
   if(offset)
     fprintf(code, "%d", offset);
-  fprintf(code, "(%s)", reg2);
-  emitComment(comment);
+  fprintf(code, "(%s)\n", reg2);
 }
 
 /* Procedure emitRegAddr prints a code line
  * that takes two register and one immidiate
  */
-void emitRegRegImm(char *op, char *reg1, char *reg2, int imm, char *comment)
+void emitRegRegImm(char *op, char *reg1, char *reg2, int imm)
 {
-  fprintf(code, "%s %s %s %d", op, reg1, reg2, imm);
-  emitComment(comment);
+  fprintf(code, "%s %s %s %d\n", op, reg1, reg2, imm);
 }
 
 /* Procedure emitRegRegReg prints a code line
  * that takes one register
  */
-void emitReg(char *op, char *reg, char *comment)
+void emitReg(char *op, char *reg)
 {
-  fprintf(code, "%s %s", op, reg);
-  emitComment(comment);
+  fprintf(code, "%s %s\n", op, reg);
 }
 
 /* Procedure emitRegRegReg prints a code line
  * that takes two registers
  */
-void emitRegReg(char *op, char *reg1, char *reg2, char *comment)
+void emitRegReg(char *op, char *reg1, char *reg2)
 {
-  fprintf(code, "%s %s %s", op, reg1, reg2);
-  emitComment(comment);
+  fprintf(code, "%s %s %s\n", op, reg1, reg2);
 }
 
 /* Procedure emitRegRegReg prints a code line
  * that takes three registers
  */
-void emitRegRegReg(char *op, char *reg1, char *reg2, char *reg3, char *comment)
+void emitRegRegReg(char *op, char *reg1, char *reg2, char *reg3)
 {
-  fprintf(code, "%s %s %s %s", op, reg1, reg2, reg3);
-  emitComment(comment);
+  fprintf(code, "%s %s %s %s\n", op, reg1, reg2, reg3);
 }
