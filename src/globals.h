@@ -32,6 +32,7 @@ enum { ERROR = 65535 };
 typedef struct BucketListRec * BucketList;
 typedef struct SymbolTableRec * SymbolTable;
 
+enum { WORD_SIZE = 4 };
 
 /* MAXRESERVED = the number of reserved words */
 enum { MAXRESERVED = 6 };
@@ -106,7 +107,8 @@ typedef enum
 
 typedef enum
 {
-   Variable,
+   LocalVariable,
+   GlobalVariable,
    Parameter,
    Function
 } SymbolClass;

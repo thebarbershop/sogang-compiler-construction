@@ -19,11 +19,6 @@ enum
   HASH_SHIFT = 4
 };
 
-enum
-{
-  WORD_SIZE = 4
-};
-
 /* Procedure printSymTab prints a formatted 
  * listing of the symbol table contents 
  * to the listing file
@@ -53,5 +48,9 @@ void setCurrentScopeMemoryLocation(int);
  * Leaves TreeNode pointer 'IOTreeNodes' to input function,
  * whose sibling is the output function. */
 void addIO(void);
+
+/* Returns TRUE if current scope is global
+ * and FALSE otherwise. */
+int isGlobalScope(void);
 
 #endif

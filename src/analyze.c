@@ -119,11 +119,11 @@ static void insertNode(TreeNode *t)
       switch(t->kind.decl)
       {
       case VarDeclK:
-        registerSymbol(t, Variable, FALSE, t->child[0]->type);
+        registerSymbol(t, isGlobalScope()?GlobalVariable:LocalVariable, FALSE, t->child[0]->type);
         insertNode(t->child[0]);
         break;
       case ArrDeclK:
-        registerSymbol(t, Variable, TRUE, t->child[0]->type);
+        registerSymbol(t, isGlobalScope()?GlobalVariable:LocalVariable, TRUE, t->child[0]->type);
         insertNode(t->child[0]);
         insertNode(t->child[1]);
         break;

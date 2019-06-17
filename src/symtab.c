@@ -166,7 +166,7 @@ int registerSymbol(TreeNode *t, SymbolClass symbol_class, int is_array, ExpType 
     symbol->symbol_class = symbol_class;
     symbol->is_array = is_array;
     symbol->type = type;
-    if(is_array && symbol_class == Variable)
+    if(is_array && (symbol_class == GlobalVariable || symbol_class == LocalVariable))
       symbol->array_size = t->child[1]->attr.val;
     if (t->nodekind == DeclK && t->kind.decl == ArrDeclK)
       currentScopeSymbolTable->location += memloc_coeff*WORD_SIZE*(t->child[1]->attr.val-1);
@@ -358,3 +358,11 @@ void addIO(void) {
   inputNode->sibling = outputNode;
   IOtreeNodes = inputNode;
 }
+
+/* Returns TRUE if current scope is global
+ * and FALSE otherwise. */
+int isGlobalScope(void)
+{
+  return (currentScopeSymbolTable->depth==0)?1:0;
+}
+
