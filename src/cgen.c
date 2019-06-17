@@ -81,10 +81,8 @@ static void cgenExp( TreeNode * tree)
 {
   switch (tree->kind.exp) {
     case AssignK:
-    {
       cgenAssign(tree);
       break;
-    }
     case OpK:
       cgenOp(tree);
       break;
@@ -94,10 +92,24 @@ static void cgenExp( TreeNode * tree)
       emitComment("<-Const");
       break;
     case VarK:
-      /* NOT IMPLEMENTED */
+      if(tree->symbol->symbol_class == GlobalVariable)
+        emitRegReg("lw", "$t0", tree->symbol->name);
+      else if(tree->symbol->symbol_class == LocalVariable)
+      {
+        /* NOT IMPLEMENTED */
+      }
       break;
     case ArrK:
-      /* NOT IMPLEMENTED */
+      if(tree->symbol->symbol_class == GlobalVariable)
+      {
+        cgenExp(tree->child[0]);
+        emitRegRegImm("mul", "$t1", "$t0", WORD_SIZE);
+        emitRegReg("lw", "$t0", addrSymbolImmReg(tree->symbol->name, '+', 0, "$t1"));
+      }
+      else if(tree->symbol->symbol_class == LocalVariable)
+      {
+        /* NOT IMPLEMENTED */
+      }
       break;
     case CallK:
       if(!strcmp("input", tree->attr.name))
@@ -152,17 +164,17 @@ static void cgenOp(TreeNode *tree)
   cgenPop("$t1");
   switch(tree->attr.op) {
   case PLUS:
-    emitRegRegReg("add", "$t0", "$t0", "$t1");
+    emitRegRegReg("add", "$t0", "$t1", "$t0");
     break;
   case MINUS:
-    emitRegRegReg("sub", "$t0", "$t0", "$t1");
+    emitRegRegReg("sub", "$t0", "$t1", "$t0");
     break;
   case TIMES:
-    emitRegRegReg("mul", "$t0", "$t0", "$t1");
+    emitRegRegReg("mul", "$t0", "$t1", "$t0");
     break;
   case OVER:
     emitReg("mflo", "$t3");
-    emitRegReg("div", "$t0", "$t1");
+    emitRegReg("div", "$t1", "$t0");
     emitReg("mflo", "$t0");
     emitReg("mtlo", "$t3");
     break;
