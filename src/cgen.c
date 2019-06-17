@@ -118,7 +118,9 @@ static void cgenExp( TreeNode * tree)
         /* Read integer from stdin to $v0 */
         emitComment("->input call");
         cgenString("_inputStr");
-        /* NOT IMPLEMENTED */
+        emitRegImm("li", "$v0", 5); /* syscall #5: read int */
+        emitCode("syscall");
+        emitRegReg("move", "$t0", "$v0");
         emitComment("<-input call");
       }
       else if(!strcmp("output", tree->attr.name))
