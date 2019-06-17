@@ -348,7 +348,7 @@ void addIO(void) {
     strncpy(buffer, "num", 4);
     addPtr(buffer);
     paramSymbol->name = buffer;
-    paramSymbol->symbol_class = Parameter;
+    paramSymbol->symbol_class = LocalVariable;
     paramSymbol->type = Integer;
 
     symbol->treeNode = outputNode;

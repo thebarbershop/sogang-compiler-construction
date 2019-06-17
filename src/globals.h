@@ -109,7 +109,6 @@ typedef enum
 {
    LocalVariable,
    GlobalVariable,
-   Parameter,
    Function
 } SymbolClass;
 

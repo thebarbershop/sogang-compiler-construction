@@ -147,11 +147,11 @@ static void insertNode(TreeNode *t)
       switch (t->kind.param)
       {
       case VarParamK:
-        registerSymbol(t, Parameter, FALSE, t->child[0]->type);
+        registerSymbol(t, LocalVariable, FALSE, t->child[0]->type);
         insertNode(t->child[0]);
         break;
       case ArrParamK:
-        registerSymbol(t, Parameter, TRUE, t->child[0]->type);
+        registerSymbol(t, LocalVariable, TRUE, t->child[0]->type);
         insertNode(t->child[0]);
         break;
       case VoidParamK:
