@@ -9,16 +9,17 @@
 
 #include "globals.h"
 #include "code.h"
+#include "util.h"
 
 /* Procedure emitComment prints a comment line 
  * with comment c in the code file
  */
-void emitComment( char * c )
+void emitComment( const char * c )
 { if (TraceCode && c && c[0]) fprintf(code,"# %s\n",c);
 }
 
 /* Procedure emitCode prints a code line */
-void emitCode(char *codeLine)
+void emitCode(const char *codeLine)
 {
  fprintf(code, "%s\n", codeLine);
 }
@@ -26,7 +27,7 @@ void emitCode(char *codeLine)
 /* Procedure emitRegImm prints a code line
  * that takes one register and one immidiate
  */
-void emitRegImm(char *op, char *reg, int imm)
+void emitRegImm(const char *op, const char *reg, int imm)
 {
   fprintf(code, "%s %s %d\n", op, reg, imm);
 }
@@ -34,7 +35,7 @@ void emitRegImm(char *op, char *reg, int imm)
 /* Procedure emitRegAddr prints a code line
  * that takes one register and one address
  */
-void emitRegAddr(char *op, char *reg1, int offset, char *reg2)
+void emitRegAddr(const char *op, const char *reg1, int offset, const char *reg2)
 {
   fprintf(code, "%s %s ", op, reg1);
   if(offset)
@@ -45,7 +46,7 @@ void emitRegAddr(char *op, char *reg1, int offset, char *reg2)
 /* Procedure emitRegAddr prints a code line
  * that takes two register and one immidiate
  */
-void emitRegRegImm(char *op, char *reg1, char *reg2, int imm)
+void emitRegRegImm(const char *op, const char *reg1, const char *reg2, int imm)
 {
   fprintf(code, "%s %s %s %d\n", op, reg1, reg2, imm);
 }
@@ -53,7 +54,7 @@ void emitRegRegImm(char *op, char *reg1, char *reg2, int imm)
 /* Procedure emitRegRegReg prints a code line
  * that takes one register
  */
-void emitReg(char *op, char *reg)
+void emitReg(const char *op, const char *reg)
 {
   fprintf(code, "%s %s\n", op, reg);
 }
@@ -61,7 +62,7 @@ void emitReg(char *op, char *reg)
 /* Procedure emitRegRegReg prints a code line
  * that takes two registers
  */
-void emitRegReg(char *op, char *reg1, char *reg2)
+void emitRegReg(const char *op, const char *reg1, const char *reg2)
 {
   fprintf(code, "%s %s %s\n", op, reg1, reg2);
 }
@@ -69,7 +70,16 @@ void emitRegReg(char *op, char *reg1, char *reg2)
 /* Procedure emitRegRegReg prints a code line
  * that takes three registers
  */
-void emitRegRegReg(char *op, char *reg1, char *reg2, char *reg3)
+void emitRegRegReg(const char *op, const char *reg1, const char *reg2, const char *reg3)
 {
   fprintf(code, "%s %s %s %s\n", op, reg1, reg2, reg3);
+}
+
+/* Generate string "symbol±imm(register)" */
+char *addrSymbolImmReg(const char *symbol, char sign, int imm, const char *reg)
+{
+  char* buff = malloc(strlen(symbol)+strlen(reg)+13);
+  sprintf(buff, "%s%c%d(%s)", symbol, sign, imm, reg);
+  addPtr(buff);
+  return buff;
 }
