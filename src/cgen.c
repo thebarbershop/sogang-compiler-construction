@@ -65,6 +65,7 @@ static void cgenStmt( TreeNode * tree)
     cgenExp(tree->child[0]);
     emitRegReg("beqz", "$t0", followingLabel);
     cgen(tree->child[1]);
+    emitReg("b", conditionLabel);
     cgenLabel(followingLabel);
     emitComment("<-iteration");
     break;
@@ -161,20 +162,21 @@ static void cgenOp(TreeNode *tree)
   cgenExp(tree->child[0]);
   cgenPush("$t0");
   cgenExp(tree->child[1]);
-  cgenPop("$t1");
+  emitRegReg("move", "$t1", "$t0");
+  cgenPop("$t0");
   switch(tree->attr.op) {
   case PLUS:
-    emitRegRegReg("add", "$t0", "$t1", "$t0");
+    emitRegRegReg("add", "$t0", "$t0", "$t1");
     break;
   case MINUS:
-    emitRegRegReg("sub", "$t0", "$t1", "$t0");
+    emitRegRegReg("sub", "$t0", "$t0", "$t1");
     break;
   case TIMES:
-    emitRegRegReg("mul", "$t0", "$t1", "$t0");
+    emitRegRegReg("mul", "$t0", "$t0", "$t1");
     break;
   case OVER:
     emitReg("mflo", "$t3");
-    emitRegReg("div", "$t1", "$t0");
+    emitRegReg("div", "$t0", "$t1");
     emitReg("mflo", "$t0");
     emitReg("mtlo", "$t3");
     break;
