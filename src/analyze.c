@@ -373,6 +373,7 @@ void typeCheck(TreeNode *t)
         
         /* Check number and type of arguments for function call */
         checkArguments(t->symbol->treeNode, t);
+        t->type = t->symbol->treeNode->type;
         break;
       }
       break;
