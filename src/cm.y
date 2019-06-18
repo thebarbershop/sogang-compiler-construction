@@ -120,15 +120,15 @@ params              : param_list
                     ;
 param_list          : param_list COMMA param
                         {
-                            YYSTYPE t = $3;
+                            YYSTYPE t = $1;
                             if (t != NULL)
                             {
                                 while (t->sibling != NULL)
                                 {
                                     t = t->sibling;
                                 }
-                                t->sibling = $1;
-                                $$ = $3;
+                                t->sibling = $3;
+                                $$ = $1;
                             }
                             else $$ = $1;
                         }
