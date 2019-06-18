@@ -47,7 +47,4 @@ void emitRegReg(const char *op, const char *reg1, const char *reg2);
  * that takes three registers
  */
 void emitRegRegReg(const char *op, const char *reg1, const char *reg2, const char *reg3);
-
-/* Generate string "symbol±imm(register)" */
-char *addrSymbolImmReg(const char *symbol, char sign, int imm, const char *reg);
 #endif

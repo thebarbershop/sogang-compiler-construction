@@ -42,7 +42,7 @@ FILE *code;
 /* allocate and set tracing flags */
 int TraceScan = FALSE;
 int TraceParse = FALSE;
-int TraceAnalyze = FALSE;
+int TraceAnalyze = TRUE;
 int TraceCode = TRUE;
 
 int Error = FALSE;
@@ -142,5 +142,5 @@ int main(int argc, char *argv[])
   fclose(source);
   cleanup();
 
-  return 0;
+  return Error;
 }

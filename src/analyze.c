@@ -13,7 +13,7 @@
 
 static void typeError(TreeNode *t, const char *message)
 {
-  fprintf(listing, "Type error at line %d: \'%s\' %s\n", t->lineno, t->attr.name, message);
+  fprintf(listing, "Type error at line %d: %s\n", t->lineno, message);
   Error = TRUE;
 }
 
@@ -119,11 +119,11 @@ static void insertNode(TreeNode *t)
       switch(t->kind.decl)
       {
       case VarDeclK:
-        registerSymbol(t, isGlobalScope()?GlobalVariable:LocalVariable, FALSE, t->child[0]->type);
+        registerSymbol(t, isGlobalScope()?Global:Local, FALSE, t->child[0]->type);
         insertNode(t->child[0]);
         break;
       case ArrDeclK:
-        registerSymbol(t, isGlobalScope()?GlobalVariable:LocalVariable, TRUE, t->child[0]->type);
+        registerSymbol(t, isGlobalScope()?Global:Local, TRUE, t->child[0]->type);
         insertNode(t->child[0]);
         insertNode(t->child[1]);
         break;
@@ -137,6 +137,7 @@ static void insertNode(TreeNode *t)
         setCurrentScopeMemoryLocation(-4);  /* memory offset for local symbols start after return address */
         flag_functionDeclared = TRUE;
         insertNode(t->child[2]);            /* This child takes care of function body */
+        t->symbol->memloc = getCurrentScopeMemoryLocation();
         decrementScope();
         node_currentFunction = NULL;
         break;
@@ -147,11 +148,13 @@ static void insertNode(TreeNode *t)
       switch (t->kind.param)
       {
       case VarParamK:
-        registerSymbol(t, LocalVariable, FALSE, t->child[0]->type);
+        ++node_currentFunction->symbol->size;
+        registerSymbol(t, Local, FALSE, t->child[0]->type);
         insertNode(t->child[0]);
         break;
       case ArrParamK:
-        registerSymbol(t, LocalVariable, TRUE, t->child[0]->type);
+        ++node_currentFunction->symbol->size;
+        registerSymbol(t, Local, TRUE, t->child[0]->type);
         insertNode(t->child[0]);
         break;
       case VoidParamK:
@@ -210,15 +213,13 @@ static void checkArguments(TreeNode *function, TreeNode *call)
     /* ArrParamK: VarK이면서 lookup해서 is_array이어야 OK */
     switch(params->kind.param)
     {
-      BucketList symbol;
       case VoidParamK:
         argumentError(args, function->attr.name, "This function does not take arguments.");
         return;
       case VarParamK:
           if(args->kind.exp == VarK)
           {
-            symbol = params->symbol;
-            if(symbol->is_array)
+            if(args->symbol->is_array)
             {
               sprintf(buff, "Expected integer for argument %d, but received array.", counter_args);
               argumentError(args, function->attr.name, buff);
@@ -227,8 +228,7 @@ static void checkArguments(TreeNode *function, TreeNode *call)
           }
           else if(args->kind.exp == CallK)
           {
-            symbol = params->symbol;
-            if(symbol->type != Integer)
+            if(args->type != Integer)
             {
               sprintf(buff, "Expected integer for argument %d, but received void function call.", counter_args);
               argumentError(args, function->attr.name, buff);
@@ -245,8 +245,7 @@ static void checkArguments(TreeNode *function, TreeNode *call)
           }
           else
           {
-            symbol = params->symbol;
-            if(!symbol->is_array)
+            if(!args->symbol->is_array)
             {
               sprintf(buff, "Expected array for argument %d, but received variable.", counter_args);
               argumentError(args, function->attr.name, buff);
@@ -330,10 +329,10 @@ void typeCheck(TreeNode *t)
       switch (t->kind.exp)
       {
       case AssignK:
-        typeCheck(t->child[0]);
         typeCheck(t->child[1]);
+        typeCheck(t->child[0]);
         if (t->child[0]->type != t->child[1]->type)
-          typeError(t->child[1], "Assign type does not match");
+          typeError(t, "Assign type does not match");
         t->type = t->child[0]->type;
         break;
       case OpK:
@@ -353,7 +352,7 @@ void typeCheck(TreeNode *t)
           if (t->symbol->is_array)
             typeError(t, "used an array like a variable");
         }
-        t->type = t->symbol->type;
+        t->type = t->symbol->treeNode->type;
         break;
       case ArrK:
         typeCheck(t->child[0]);
@@ -361,7 +360,7 @@ void typeCheck(TreeNode *t)
           typeError(t, "used a non-array like a array");
         if ((t->child[0]->type != Integer))
           typeError(t, "Array index in not integer");
-        t->type = t->symbol->type;
+        t->type = t->symbol->treeNode->type;
         break;
       case CallK:
         ++flag_callArguments;
@@ -371,7 +370,6 @@ void typeCheck(TreeNode *t)
           typeError(t, "used a non-function like a function");
           break;
         }
-        t->type = t->symbol->type;
         
         /* Check number and type of arguments for function call */
         checkArguments(t->symbol->treeNode, t);

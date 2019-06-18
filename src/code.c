@@ -60,26 +60,15 @@ void emitReg(const char *op, const char *reg)
 }
 
 /* Procedure emitRegRegReg prints a code line
- * that takes two registers
- */
+ * that takes two registers */
 void emitRegReg(const char *op, const char *reg1, const char *reg2)
 {
   fprintf(code, "%s %s %s\n", op, reg1, reg2);
 }
 
 /* Procedure emitRegRegReg prints a code line
- * that takes three registers
- */
+ * that takes three registers */
 void emitRegRegReg(const char *op, const char *reg1, const char *reg2, const char *reg3)
 {
   fprintf(code, "%s %s %s %s\n", op, reg1, reg2, reg3);
-}
-
-/* Generate string "symbol±imm(register)" */
-char *addrSymbolImmReg(const char *symbol, char sign, int imm, const char *reg)
-{
-  char* buff = malloc(strlen(symbol)+strlen(reg)+13);
-  sprintf(buff, "%s%c%d(%s)", symbol, sign, imm, reg);
-  addPtr(buff);
-  return buff;
 }

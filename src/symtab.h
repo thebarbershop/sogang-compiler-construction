@@ -41,8 +41,11 @@ int registerSymbol(TreeNode *t, SymbolClass symbol_class, int is_array, ExpType 
 /* Attempts to lookup symbol from table. Return table entry or NULL. */
 BucketList lookupSymbol(TreeNode *t);
 
-/* set memory location of current symbol table */
+/* Sets memory location of current symbol table */
 void setCurrentScopeMemoryLocation(int);
+
+/* Gets memory location of current symbol table */
+int getCurrentScopeMemoryLocation(void);
 
 /* Adds global symbols for pre-defined IO functions.
  * Leaves TreeNode pointer 'IOTreeNodes' to input function,

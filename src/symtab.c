@@ -90,18 +90,17 @@ static BucketList st_insert(char *name, int lineno, int loc)
 {
   int h = hash(name);
   BucketList l = currentScopeSymbolTable->hashTable[h];
-  while ((l != NULL) && (strcmp(name, l->name) != 0))
+  while ((l != NULL) && (strcmp(name, l->treeNode->attr.name) != 0))
     l = l->next;
   if (l == NULL) /* symbol not yet in table */
   {
     l = malloc(sizeof(struct BucketListRec));
     addPtr(l);
-    l->name = name;
     l->lines = malloc(sizeof(struct LineListRec));
     l->lines->lineno = lineno;
     l->lines->next = NULL;
     l->memloc = loc;
-    l->array_size = 0;
+    l->size = 0;
     l->next = NULL;
     l->next = currentScopeSymbolTable->hashTable[h];
     currentScopeSymbolTable->hashTable[h] = l;
@@ -130,7 +129,7 @@ BucketList lookupSymbol(TreeNode *t)
   while(currentScopeSymbolTable)
   {
     BucketList l = currentScopeSymbolTable->hashTable[h];
-    while ((l != NULL) && (strcmp(t->attr.name, l->name) != 0))
+    while ((l != NULL) && (strcmp(t->attr.name, l->treeNode->attr.name) != 0))
       l = l->next;
 
     if (l == NULL)
@@ -147,40 +146,47 @@ BucketList lookupSymbol(TreeNode *t)
   return NULL;
 }
 
-const char* const symbol_class_string[] = {"Variable", "Parameter", "Function"};
+const char* const symbol_class_string[] = {"Variable", "Variable", "Parameter", "Function"};
 const char* const exp_type_string[] = {"void", "int"};
 
-/* Attempts to register symbol name. return 1 for success, 0 for failure. */
+/* Attempts to register symbol name. return 0 for success, 1 for failure. */
 int registerSymbol(TreeNode *t, SymbolClass symbol_class, int is_array, ExpType type) {
   int memloc_coeff = (t->nodekind == ParamK)?1:-1; /* positive offset for parameters; negative otherwise */
   
   int h = hash(t->attr.name);
   BucketList l = currentScopeSymbolTable->hashTable[h];
-  while ((l != NULL) && (strcmp(t->attr.name, l->name) != 0))
+  while ((l != NULL) && (strcmp(t->attr.name, l->treeNode->attr.name) != 0))
     l = l->next;
 
   if (l == NULL)
   { /* The symbol is not found in current scope. */
-    BucketList symbol = st_insert(t->attr.name, t->lineno, currentScopeSymbolTable->location);
-    currentScopeSymbolTable->location += memloc_coeff*WORD_SIZE;
+    int location = currentScopeSymbolTable->location;
+    BucketList symbol = st_insert(t->attr.name, t->lineno, location);
+    if(!isGlobalScope() && !(t->nodekind==DeclK && t->kind.decl==FunDeclK))
+    {
+      if(is_array)
+        currentScopeSymbolTable->location += memloc_coeff * WORD_SIZE * t->child[1]->attr.val;
+      else
+        currentScopeSymbolTable->location += memloc_coeff*WORD_SIZE;
+    }
     symbol->symbol_class = symbol_class;
     symbol->is_array = is_array;
-    symbol->type = type;
-    if(is_array && (symbol_class == GlobalVariable || symbol_class == LocalVariable))
-      symbol->array_size = t->child[1]->attr.val;
-    if (t->nodekind == DeclK && t->kind.decl == ArrDeclK)
-      currentScopeSymbolTable->location += memloc_coeff*WORD_SIZE*(t->child[1]->attr.val-1);
-    if (t->nodekind == DeclK && t->kind.decl == FunDeclK)
+    if(is_array && (symbol_class == Global || symbol_class == Local))
+      symbol->size = t->child[1]->attr.val;
+    if(t->nodekind == DeclK && t->kind.decl == FunDeclK)
+      symbol->size = 0;
+    if (t->nodekind == DeclK || t->nodekind == ParamK)
       symbol->treeNode = t;
     t->symbol = symbol;
-    return 1;
+    t->type = type;
+    return 0; 
   }
   else
   {
     char buffer[256];
     sprintf(buffer, "already declared.");
     scopeError(t, buffer);
-    return 0;
+    return 1;
   }
 }
 
@@ -191,7 +197,7 @@ int registerSymbol(TreeNode *t, SymbolClass symbol_class, int is_array, ExpType 
 void printSymTab(FILE *listing)
 { 
   int i;
-  fprintf(listing, "Symbol Name  Scope  Location  Symbol Class  Array?  Array Size  Type  Line Numbers\n");
+  fprintf(listing, "Symbol Name  Scope  Location  Symbol Class  Array?  Size  Type  Line Numbers\n");
   fprintf(listing, "----------------------------------------------------------------------------------\n");
   for (i = 0; i < HASHTABLE_SIZE; ++i)
   {
@@ -201,16 +207,19 @@ void printSymTab(FILE *listing)
       while (l != NULL)
       {
         LineList t = l->lines;
-        fprintf(listing, "%-12s ", l->name);
+        fprintf(listing, "%-12s ", l->treeNode->attr.name);
         fprintf(listing, "%-6d ", currentScopeSymbolTable->depth);
-        fprintf(listing, "%-9d ", l->memloc);
+        if(isGlobalScope() && l->symbol_class != Function)
+          fprintf(listing, "%-9c ", '-');
+        else
+          fprintf(listing, "%-9d ", l->memloc);
         fprintf(listing, "%-13s ", symbol_class_string[l->symbol_class]);
         fprintf(listing, "%-7s ", l->is_array?"Y":"N");
-        if (l->is_array)
-          fprintf(listing, "%-11d ", l->array_size);
+        if (l->is_array || l->symbol_class == Function)
+          fprintf(listing, "%-5d ", l->size);
         else
-          fprintf(listing, "%-11s ", "-");
-        fprintf(listing, "%-5s ", exp_type_string[l->type]);
+          fprintf(listing, "%-5s ", "-");
+        fprintf(listing, "%-5s ", exp_type_string[l->treeNode->type]);
         while (t != NULL)
         {
           fprintf(listing, "%4d ", t->lineno);
@@ -269,9 +278,14 @@ void decrementScope(void)
   free(tableToDelete);
 }
 
-/* set memory location of current symbol table */
+/* Sets memory location of current symbol table */
 void setCurrentScopeMemoryLocation(int location) {
   currentScopeSymbolTable->location = location;
+}
+
+/* Gets memory location of current symbol table */
+int getCurrentScopeMemoryLocation(void) {
+  return currentScopeSymbolTable->location;
 }
 
 static TreeNode* IOtreeNodes;
@@ -279,7 +293,6 @@ static TreeNode* IOtreeNodes;
  * Returns pointer to input function node,
  * whose sibling is the output function node. */
 void addIO(void) {
-  int memloc_coeff = -1; /* positive offset for parameters; negative otherwise */
   TreeNode *inputNode, *outputNode;
   char * buffer;
 
@@ -288,11 +301,10 @@ void addIO(void) {
     buffer = malloc(sizeof(char)*6);
     strncpy(buffer, "input", 6);
     addPtr(buffer);
-    BucketList symbol = st_insert(buffer, -1, currentScopeSymbolTable->location);
-    currentScopeSymbolTable->location += memloc_coeff*WORD_SIZE;
+    BucketList symbol = st_insert(buffer, -1, 0);
     symbol->symbol_class = Function;
     symbol->is_array = FALSE;
-    symbol->type = Integer;
+    symbol->size = 0;
 
     /* Create a dummy tree node for input */
     inputNode = newDeclNode(FunDeclK);
@@ -304,6 +316,7 @@ void addIO(void) {
     inputNode->child[1] = paramNode;
     inputNode->child[2] = stmtNode;
     inputNode->attr.name = "input";
+    inputNode->type = Integer;
     typeNode->type = Integer;
     symbol->treeNode = inputNode;
     inputNode->symbol = symbol;
@@ -314,11 +327,10 @@ void addIO(void) {
     buffer = malloc(sizeof(char)*7);
     strncpy(buffer, "output", 7);
     addPtr(buffer);
-    BucketList symbol = st_insert(buffer, -1, currentScopeSymbolTable->location);
-    currentScopeSymbolTable->location += memloc_coeff*WORD_SIZE;
+    BucketList symbol = st_insert(buffer, -1, 0);
     symbol->symbol_class = Function;
     symbol->is_array = FALSE;
-    symbol->type = Void;
+    symbol->size = 1;
 
     /* Create a dummy tree node for output */
     outputNode = newDeclNode(FunDeclK);
@@ -333,6 +345,7 @@ void addIO(void) {
     outputNode->child[1] = paramNode;
     outputNode->child[2] = stmtNode;
     outputNode->attr.name = "output";
+    outputNode->type = Void;
     typeNode->type = Void;
     paramNode->child[0] = paramTypeNode;
     paramNode->type = Integer;
@@ -340,16 +353,11 @@ void addIO(void) {
     paramNode->symbol = paramSymbol;
     paramTypeNode->type = Integer;
     paramSymbol->treeNode = paramNode;
-    paramSymbol->array_size = 0;
+    paramSymbol->size = 0;
     paramSymbol->is_array = FALSE;
     paramSymbol->lines = NULL;
     paramSymbol->memloc = 4;
-    buffer = malloc(sizeof(char)*4);
-    strncpy(buffer, "num", 4);
-    addPtr(buffer);
-    paramSymbol->name = buffer;
-    paramSymbol->symbol_class = LocalVariable;
-    paramSymbol->type = Integer;
+    paramSymbol->symbol_class = Parameter;
 
     symbol->treeNode = outputNode;
     outputNode->symbol = symbol;

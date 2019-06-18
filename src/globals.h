@@ -107,8 +107,9 @@ typedef enum
 
 typedef enum
 {
-   LocalVariable,
-   GlobalVariable,
+   Local,
+   Global,
+   Parameter,
    Function
 } SymbolClass;
 
@@ -156,13 +157,21 @@ typedef struct LineListRec
  */
 typedef struct BucketListRec
 {
-  char *name;
-  LineList lines;
-  int memloc; /* memory location for variable */
+  LineList lines;  
   SymbolClass symbol_class;
-  int is_array;
-  int array_size;
-  ExpType type;
+  int is_registered_argument; /* only for parameters */
+  int is_array; /* only for VarK */
+
+  /* int memloc
+   * - local variable/parameter >4: memory location
+   * - parameter 0~3: register number ($a0~$a3)
+   * - function: offset of local declaration */
+  int memloc;
+  /* int size
+   * - global/local array: array size
+   * - function: number of parameters */
+  int size;
+
   TreeNode *treeNode;
   struct BucketListRec *next;
 } * BucketList;
