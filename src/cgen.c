@@ -25,6 +25,7 @@ static void cgenPush(char *reg);
 static void cgenString(char *label);
 static void cgenLabel(char *label);
 static char* getLabel(void);
+static void cgenArrayAddress(TreeNode *node);
 
 static char *returnLabel; /* return label used in a function */
 
@@ -33,7 +34,7 @@ static char *returnLabel; /* return label used in a function */
 static char *addrSymbolImmReg(const char *symbol, char sign, int imm, const char *reg)
 {
   char* buff = malloc(strlen(symbol)+strlen(reg)+14);
-  sprintf(buff, "_%s%c%d(%s)", symbol, sign, imm, reg);
+  sprintf(buff, "%s%c%d(%s)", symbol, sign, imm, reg);
   addPtr(buff);
   return buff;
 }
@@ -122,21 +123,34 @@ static void cgenExp( TreeNode * node)
       emitComment("<-Const");
       break;
     case VarK:
-      if(node->symbol->symbol_class == Global)
-        emitRegReg("lw", "$t0", underbar(node->attr.name));
-      else if(node->symbol->symbol_class == Local)
+      if(node->symbol->is_array)
       {
-        char *buff = malloc(strlen(node->attr.name)+20);
-        int offset = node->symbol->memloc;
-        if(returnLabel && offset<0) offset -= 8;
-        sprintf(buff, "-> local variable %s", node->attr.name);
+        char *buff = malloc(strlen(node->attr.name)+10);
+        sprintf(buff, "-> array %s", node->attr.name);
         emitComment(buff);
-        emitRegReg("move", "$t1", "$fp");
-        emitRegImm("addu", "$t1", offset);
-        emitRegAddr("lw", "$t0", 0, "$t1");
-        sprintf(buff, "<- local variable %s", node->attr.name);
+        cgenArrayAddress(node);
+        sprintf(buff, "<- array %s", node->attr.name);
         emitComment(buff);
         free(buff);
+      }
+      else
+      {
+        if(node->symbol->symbol_class == Global)
+          emitRegReg("lw", "$t0", underbar(node->attr.name));
+        else
+        {
+          char *buff = malloc(strlen(node->attr.name)+20);
+          int offset = node->symbol->memloc;
+          if(returnLabel && offset<0) offset -= 8;
+          sprintf(buff, "-> local variable %s", node->attr.name);
+          emitComment(buff);
+          emitRegReg("move", "$t1", "$fp");
+          emitRegImm("addu", "$t1", offset);
+          emitRegAddr("lw", "$t0", 0, "$t1");
+          sprintf(buff, "<- local variable %s", node->attr.name);
+          emitComment(buff);
+          free(buff);
+        }
       }
       break;
     case ArrK:
@@ -166,8 +180,8 @@ static void cgenExp( TreeNode * node)
       {
         /* Print integer from $a0 to stdout */
         emitComment("->call \'output\'");
-        cgenString("_outputStr");
         cgenExp(node->child[0]); /* evaluate parameter */
+        cgenString("_outputStr");
         emitRegReg("move", "$a0", "$t0");
         emitRegImm("li", "$v0", 1); /* syscall #1: print int */
         emitCode("syscall");
@@ -280,16 +294,22 @@ static void cgenAssign(TreeNode *node)
       /* offset is WORD_SIZE*index */
       emitRegRegImm("mul", "$t0", "$t0", WORD_SIZE);
       /* addressing mode: symbol+0(register) */
-      addressLHS = addrSymbolImmReg(node->child[0]->attr.name, '+', 0, "$t0");
+      addressLHS = addrSymbolImmReg(underbar(node->child[0]->attr.name), '+', 0, "$t0");
     }
   }
-  else if(node->child[0]->symbol->symbol_class == Local)
+  else
   {
     if(node->child[0]->symbol->is_array)
     {
-      /* $fp - memloc(4*index) */
-      cgenExp(node->child[0]->child[0]);
-      addressLHS = addrSymbolImmReg("$fp", '+', 0, "$t0");
+      cgenArrayAddress(node->child[0]);
+      emitRegReg("move", "$t2", "$t0");
+
+      /* get address of indexed element */
+      cgenExp(node->child[0]->child[0]); /* index in $t0 */
+      emitRegRegImm("mul", "$t0", "$t0", WORD_SIZE);
+      emitRegRegReg("addu", "$t2", "$t2", "$t0");
+      
+      addressLHS = parentheses("$t2");
     }
     else
     {
@@ -427,7 +447,7 @@ static void cgenFunDecl(TreeNode *node)
     cgenPush("$ra"); /* save return address */
     cgenPush("$fp"); /* save frame pointer */
     /* set frame pointer of new function */
-    emitRegRegImm("addu", "$fp", "$sp", 3*WORD_SIZE);
+    emitRegRegImm("addu", "$fp", "$sp", 2*WORD_SIZE);
   }
   /* reserve space for local variables */
   emitRegRegImm("subu", "$sp", "$sp", -node->symbol->memloc);
@@ -437,7 +457,7 @@ static void cgenFunDecl(TreeNode *node)
     if(node->type == Integer)
       cgenLabel(returnLabel);
     
-    emitRegRegImm("subu", "$sp", "$fp", 3*WORD_SIZE);
+    emitRegRegImm("subu", "$sp", "$fp", 2*WORD_SIZE);
     cgenPop("$fp"); /* restore frame pointer */
     cgenPop("$ra"); /* restore return address */
     emitReg("jr", "$ra");
@@ -472,7 +492,7 @@ static void cgenGlobal(TreeNode *node)
   }
 }
 
-
+/* Procedure getLabel returns a new label */
 static char* getLabel(void)
 {
   static unsigned int labelN = 0;
@@ -485,6 +505,26 @@ static char* getLabel(void)
   sprintf(buff, "L%d", labelN++);
   addPtr(buff);
   return buff;
+}
+
+/* Procedure cgenArrayAddress generates
+ * code to calculate address of given array
+ * and store it at $t0 */
+static void cgenArrayAddress(TreeNode *node)
+{
+  int offset = node->symbol->memloc;
+  if(returnLabel && offset<0) offset -= 8;
+  if(node->symbol->symbol_class == Global)
+    emitRegReg("lw", "$t0", underbar(node->attr.name));
+  else if(node->symbol->symbol_class == Local) {
+    emitRegReg("move", "$t0", "$fp");
+    emitRegImm("addu", "$t0", offset);
+  }
+  else { /* Parameter */
+    emitRegReg("move", "$t0", "$fp");
+    emitRegImm("addu", "$t0", offset);
+    emitRegAddr("lw", "$t0", 0, "$t0");
+  }
 }
 
 /**********************************************/
