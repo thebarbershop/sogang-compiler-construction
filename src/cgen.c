@@ -26,6 +26,8 @@ static void cgenString(char *label);
 static void cgenLabel(char *label);
 static char* getLabel(void);
 
+static char *returnLabel; /* return label used in a function */
+
 /* Functions to generate decorated strings  */
 /* Generate string "symbol±imm(register)" */
 static char *addrSymbolImmReg(const char *symbol, char sign, int imm, const char *reg)
@@ -96,7 +98,9 @@ static void cgenStmt( TreeNode * node)
     break;
   }
   case ReturnK:
-    /* TODO: implement return sequence */
+    cgenExp(node->child[0]);
+    emitRegReg("move", "$v0", "$t0");
+    emitReg("j", returnLabel);
     break;
   }
 } /* cgenStmt */
@@ -122,11 +126,18 @@ static void cgenExp( TreeNode * node)
         emitRegReg("lw", "$t0", underbar(node->attr.name));
       else if(node->symbol->symbol_class == Local)
       {
+        char *buff = malloc(strlen(node->attr.name)+20);
+        int offset = node->symbol->memloc;
+        if(returnLabel && offset<0) offset -= 8;
+        sprintf(buff, "-> local variable %s", node->attr.name);
+        emitComment(buff);
         emitRegReg("move", "$t1", "$fp");
-        emitRegImm("addu", "$t1", node->symbol->memloc);
+        emitRegImm("addu", "$t1", offset);
         emitRegAddr("lw", "$t0", 0, "$t1");
+        sprintf(buff, "<- local variable %s", node->attr.name);
+        emitComment(buff);
+        free(buff);
       }
-      /* TODO: Do I need to take different care of parameters? */
       break;
     case ArrK:
       if(node->symbol->symbol_class == Global)
@@ -175,6 +186,9 @@ static void cgenExp( TreeNode * node)
           cgenPush("$t0");
         }
         emitReg("jal", underbar(node->attr.name));
+        emitRegReg("move", "$t0", "$v0");
+        /* pop arguments from stack */
+        emitRegRegImm("addu", "$sp", "$sp", WORD_SIZE*(node->symbol->size+1));
         emitComment("<-call function");
       }
       break;
@@ -275,14 +289,15 @@ static void cgenAssign(TreeNode *node)
     {
       /* $fp - memloc(4*index) */
       cgenExp(node->child[0]->child[0]);
-      if(node->child[0]->symbol->symbol_class == Parameter)
       addressLHS = addrSymbolImmReg("$fp", '+', 0, "$t0");
     }
     else
     {
       /* $fp + memloc */
+      int offset = node->child[0]->symbol->memloc;
+      if(returnLabel && offset < 0) offset -= 8;
       emitRegReg("move", "$t2", "$fp");
-      emitRegImm("addu", "$t2", node->child[0]->symbol->memloc);
+      emitRegImm("addu", "$t2", offset);
       addressLHS = parentheses("$t2");
     }
   }
@@ -388,9 +403,6 @@ static void cgenFunDecl(TreeNode *node)
 {
   /* Function Preamble */
   char *buff = malloc(strlen(node->attr.name) + 37);
-  char *returnLabel;
-  if(node->type == Integer) /* Only int functions need return */
-    returnLabel = getLabel();
   sprintf(buff, "->function \'%s\'", node->attr.name);
   emitComment(buff);
   if(globalEmitMode != TEXT)
@@ -408,29 +420,30 @@ static void cgenFunDecl(TreeNode *node)
   }
   else
   {
+    returnLabel = getLabel();
     sprintf(buff, "_%s:", node->attr.name);
     emitCode(buff);
     emitComment("entry routine");
     cgenPush("$ra"); /* save return address */
     cgenPush("$fp"); /* save frame pointer */
-    /* set new frame pointer by reserving space
-    * for params, saved ra, saved fp */
-    emitRegRegImm("addu", "$fp", "$sp", 4*node->symbol->size+8);
+    /* set frame pointer of new function */
+    emitRegRegImm("addu", "$fp", "$sp", 3*WORD_SIZE);
   }
   /* reserve space for local variables */
   emitRegRegImm("subu", "$sp", "$sp", -node->symbol->memloc);
   cgenCompound(node->child[2]);
-  if(strcmp(node->attr.name, "main")){
+  if(strcmp(node->attr.name, "main")){ /* only for non-main */
     emitComment("exit routine");
     if(node->type == Integer)
       cgenLabel(returnLabel);
-    emitRegAddr("lw", "$ra", -4*node->symbol->size, "$fp");
-    emitRegReg("move", "$t0", "$fp");
-    emitRegAddr("lw", "$fp", -4*(node->symbol->size+1), "$fp");
-    emitRegReg("move", "$sp", "$t0");
+    
+    emitRegRegImm("subu", "$sp", "$fp", 3*WORD_SIZE);
+    cgenPop("$fp"); /* restore frame pointer */
+    cgenPop("$ra"); /* restore return address */
     emitReg("jr", "$ra");
     sprintf(buff, "<-function \'%s\'", node->attr.name);
     emitComment(buff);
+    returnLabel = NULL;
   }
   free(buff);
 }
