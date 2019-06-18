@@ -164,7 +164,7 @@ int registerSymbol(TreeNode *t, SymbolClass symbol_class, int is_array, ExpType 
     BucketList symbol = st_insert(t->attr.name, t->lineno, location);
     if(!isGlobalScope() && !(t->nodekind==DeclK && t->kind.decl==FunDeclK))
     {
-      if(is_array)
+      if(is_array && symbol_class != Parameter)
         currentScopeSymbolTable->location += memloc_coeff * WORD_SIZE * t->child[1]->attr.val;
       else
         currentScopeSymbolTable->location += memloc_coeff*WORD_SIZE;
@@ -177,6 +177,8 @@ int registerSymbol(TreeNode *t, SymbolClass symbol_class, int is_array, ExpType 
       symbol->size = 0;
     if (t->nodekind == DeclK || t->nodekind == ParamK)
       symbol->treeNode = t;
+    if(t->nodekind == DeclK && t->kind.decl == ArrDeclK)
+      symbol->memloc -= (symbol->size-1)*WORD_SIZE;
     t->symbol = symbol;
     t->type = type;
     return 0; 
