@@ -149,12 +149,12 @@ static void insertNode(TreeNode *t)
       {
       case VarParamK:
         ++node_currentFunction->symbol->size;
-        registerSymbol(t, Local, FALSE, t->child[0]->type);
+        registerSymbol(t, Parameter, FALSE, t->child[0]->type);
         insertNode(t->child[0]);
         break;
       case ArrParamK:
         ++node_currentFunction->symbol->size;
-        registerSymbol(t, Local, TRUE, t->child[0]->type);
+        registerSymbol(t, Parameter, TRUE, t->child[0]->type);
         insertNode(t->child[0]);
         break;
       case VoidParamK:
