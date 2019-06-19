@@ -42,8 +42,8 @@ FILE *code;
 /* allocate and set tracing flags */
 int TraceScan = FALSE;
 int TraceParse = FALSE;
-int TraceAnalyze = TRUE;
-int TraceCode = TRUE;
+int TraceAnalyze = FALSE;
+int TraceCode = FALSE;
 
 int Error = FALSE;
 
