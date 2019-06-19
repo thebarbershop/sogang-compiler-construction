@@ -23,8 +23,8 @@ This project is based on codes for a TINY Language compiler, whose source code i
 
 ## Project 4: Code Generator
 
-- [ ] Implemented a stack-based environment with a frame pointer.
-- [ ] Completed a code generator for the SPIM 8.0 simulator. [2]
+- [x] Implemented a stack-based environment with a frame pointer.
+- [x] Completed a code generator for the SPIM 8.0 simulator. [2]
 
 ---
 
