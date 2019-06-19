@@ -343,15 +343,15 @@ args                : arg_list { $$ = $1; }
                     ;
 arg_list            : arg_list COMMA expression
                         {
-                            YYSTYPE t = $3;
+                            YYSTYPE t = $1;
                             if (t != NULL)
                             {
                                 while (t->sibling != NULL)
                                 {
                                     t = t->sibling;
                                 }
-                                t->sibling = $1;
-                                $$ = $3;
+                                t->sibling = $3;
+                                $$ = $1;
                             }
                             else $$ = $1;
                         }
