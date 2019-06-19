@@ -5,11 +5,16 @@
 /* Compiler Construction: Principles and Practice   */
 /* Kenneth C. Louden, 1997                          */
 /* Modified by Eom Taegyung                         */
-/****************************************************/
+/****************************************************/ 
 
 #include "globals.h"
-#include "symtab.h"
+#include "symtab.h" 
 #include "analyze.h"
+
+/* Returns the minimum of two arguments */
+static int min(int a, int b) {
+  return a<b?a:b;
+}
 
 static void typeError(TreeNode *t, const char *message)
 {
@@ -121,23 +126,27 @@ static void insertNode(TreeNode *t)
       case VarDeclK:
         registerSymbol(t, isGlobalScope()?Global:Local, FALSE, t->child[0]->type);
         insertNode(t->child[0]);
+        if(node_currentFunction)
+            node_currentFunction->symbol->memloc = min(node_currentFunction->symbol->memloc, t->symbol->memloc);
         break;
       case ArrDeclK:
         registerSymbol(t, isGlobalScope()?Global:Local, TRUE, t->child[0]->type);
         insertNode(t->child[0]);
         insertNode(t->child[1]);
+        if(node_currentFunction)
+            node_currentFunction->symbol->memloc = min(node_currentFunction->symbol->memloc, t->symbol->memloc);
         break;
       case FunDeclK:
         node_currentFunction = t;
         registerSymbol(t, Function, FALSE, t->child[0]->type);
         incrementScope();
         insertNode(t->child[0]);
-        setCurrentScopeMemoryLocation(4);   /* memory offset for paramters starts before control link */
+        setCurrentScopeMemoryLocation(0);   /* memory offset for paramters starts before control link */
         insertNode(t->child[1]);            /* This child takes care of parameter declarations */
         setCurrentScopeMemoryLocation(-4);  /* memory offset for local symbols start after return address */
         flag_functionDeclared = TRUE;
         insertNode(t->child[2]);            /* This child takes care of function body */
-        t->symbol->memloc = getCurrentScopeMemoryLocation();
+        t->symbol->memloc -= 4;
         decrementScope();
         node_currentFunction = NULL;
         break;
@@ -239,9 +248,9 @@ static void checkArguments(TreeNode *function, TreeNode *call)
         case ArrParamK:
           if(args->kind.exp != VarK)
           {
-              sprintf(buff, "Expected array for argument %d, but received something else.", counter_args);
-              argumentError(args, function->attr.name, buff);
-              return;
+            sprintf(buff, "Expected array for argument %d, but received something else.", counter_args);
+            argumentError(args, function->attr.name, buff);
+            return;
           }
           else
           {
