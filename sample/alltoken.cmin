@@ -14,9 +14,6 @@ int mod(int x, int y) {
     return x-x/y*y;
 }
 
-void output(int i) {
-    ;
-}
 void main(void) {
     int i;
     int arr[100];
@@ -39,5 +36,6 @@ void main(void) {
         if(mod(i,5) >= 4) {
             output(i);
         }
+        i = i + 1;
     }
 }
