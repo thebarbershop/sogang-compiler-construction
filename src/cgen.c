@@ -116,13 +116,10 @@ static void cgenExp(TreeNode *node)
       else
       {
         char *buff = malloc(strlen(getName(node)) + 20);
-        int offset = node->symbol->memloc;
-        if (returnLabel > 0 && offset < 0)
-          offset -= 8;
         sprintf(buff, "-> local variable %s", getName(node));
         emitComment(buff);
         emitRegReg("move", "$t0", "$fp");
-        emitRegImm("addu", "$t0", offset);
+        emitRegImm("addu", "$t0", node->symbol->memloc);
         emitRegAddr("lw", "$v0", NULL, 0, "$t0");
         sprintf(buff, "<- local variable %s", getName(node));
         emitComment(buff);
@@ -178,8 +175,13 @@ static void cgenExp(TreeNode *node)
       }
       cgenPush("$fp");                  /* control link */
       emitRegReg("move", "$fp", "$sp"); /* new frame pointer */
+      cgenPush("$ra");                  /* save return address */
       emitReg("jal", getName(node));
       /* pop arguments from stack */
+
+      emitRegRegImm("subu", "$sp", "$fp", 4);
+      cgenPop("$ra"); /* restore return address */
+      cgenPop("$fp"); /* restore frame pointer */
       emitRegRegImm("addu", "$sp", "$sp", WORD_SIZE * (node->symbol->size));
       emitComment("<-call function");
     }
@@ -270,29 +272,26 @@ static void cgenAssign(TreeNode *node)
     { /* Global Array */
       /* evaluate array index */
       cgenExp(LHS->child[0]);
-      /* offset is WORD_SIZE*index */
       emitRegRegImm("mul", "$v0", "$v0", WORD_SIZE);
       emitRegAddr("la", "$t0", getName(LHS), 0, NULL);
       emitRegRegReg("addu", "$v0", "$v0", "$t0");
     }
   }
-  else
-  { /* Local Variable/Array assignment */
+  else /* Local Variable/Array assignment */
+  {
     if ((LHS->symbol->treeNode->nodekind == DeclK && LHS->symbol->treeNode->kind.decl == VarDeclK) || (LHS->symbol->treeNode->nodekind == ParamK && LHS->symbol->treeNode->kind.param == VarParamK))
     { /* Local Variable */
-      int offset = node->child[0]->symbol->memloc;
-      if (returnLabel > 0 && offset < 0)
-        offset -= 8;
       emitRegReg("move", "$t0", "$fp");
-      emitRegImm("addu", "$t0", offset);
+      emitRegImm("addu", "$t0", node->child[0]->symbol->memloc);
       emitRegReg("move", "$v0", "$t0");
     }
-    else
+    else /* Local Array */
     {
       cgenArrayAddress(LHS); /* Array address in $v0  */
-      emitRegReg("move", "$t0", "$v0");
+      cgenPush("$v0");
 
       cgenExp(LHS->child[0]); /* index in $v0 */
+      cgenPop("$t0");
       emitRegRegImm("mul", "$v0", "$v0", WORD_SIZE);
       emitRegRegReg("addu", "$v0", "$t0", "$v0");
     }
@@ -416,10 +415,9 @@ static void cgenFunDecl(TreeNode *node)
     returnLabel = getLabel();
     emitLabelStr(getName(node));
     emitComment("entry routine");
-    cgenPush("$ra"); /* save return address */
   }
   /* reserve space for local variables */
-  emitRegRegImm("subu", "$sp", "$sp", -node->symbol->memloc - WORD_SIZE);
+  emitRegRegImm("subu", "$sp", "$fp", -node->symbol->memloc);
   cgenCompound(node->child[2]); /* run the body code */
   if (strcmp(getName(node), "main"))
   { /* only for non-main */
@@ -427,9 +425,6 @@ static void cgenFunDecl(TreeNode *node)
     if (node->type == Integer)
       emitLabelNum(returnLabel);
 
-    emitRegRegImm("subu", "$sp", "$fp", 4);
-    cgenPop("$ra"); /* restore return address */
-    cgenPop("$fp"); /* restore frame pointer */
     emitReg("jr", "$ra");
     sprintf(buff, "<-function \'%s\'", getName(node));
     emitComment(buff);
@@ -490,20 +485,17 @@ static char *getName(TreeNode *node)
  * of given array and store it at $v0 */
 static void cgenArrayAddress(TreeNode *node)
 {
-  int offset = node->symbol->memloc;
-  if (returnLabel > 0 && offset < 0)
-    offset -= 8;
   if (node->symbol->symbol_class == Global)
     emitRegAddr("la", "$v0", getName(node), 0, NULL);
   else if (node->symbol->symbol_class == Local)
   {
     emitRegReg("move", "$v0", "$fp");
-    emitRegImm("addu", "$v0", offset);
+    emitRegImm("addu", "$v0", node->symbol->memloc);
   }
   else
   { /* Parameter */
     emitRegReg("move", "$v0", "$fp");
-    emitRegImm("addu", "$v0", offset);
+    emitRegImm("addu", "$v0", node->symbol->memloc);
     emitRegAddr("lw", "$v0", NULL, 0, "$v0");
   }
 }
