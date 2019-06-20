@@ -41,6 +41,7 @@ static void semanticError(TreeNode *t, const char *message)
 static int flag_functionDeclared = FALSE;
 static int flag_callArguments = 0;
 static TreeNode *node_currentFunction = NULL;
+
 /* Procedure insertNode inserts 
  * identifiers stored in t into 
  * the symbol table 
@@ -144,8 +145,8 @@ static void insertNode(TreeNode *t)
         insertNode(t->child[0]);
         setCurrentScopeMemoryLocation(4);  /* memory offset for paramters starts before control link */
         insertNode(t->child[1]);           /* This child takes care of parameter declarations */
-        setCurrentScopeMemoryLocation(-8); /* memory offset for local symbols start after return address */
-        t->symbol->memloc = -4;
+        setCurrentScopeMemoryLocation(-8); /* memory offset for local symbols starts after return address */
+        t->symbol->memloc = -4;            /* The first element of activation record is return address */
         flag_functionDeclared = TRUE;
         insertNode(t->child[2]); /* This child takes care of function body */
         decrementScope();
@@ -158,13 +159,19 @@ static void insertNode(TreeNode *t)
       switch (t->kind.param)
       {
       case VarParamK:
-        ++node_currentFunction->symbol->size;
-        registerSymbol(t, Parameter, FALSE, t->child[0]->type);
-        insertNode(t->child[0]);
-        break;
       case ArrParamK:
         ++node_currentFunction->symbol->size;
-        registerSymbol(t, Parameter, TRUE, t->child[0]->type);
+        registerSymbol(t, Parameter, t->kind.param == ArrParamK ? TRUE : FALSE, t->child[0]->type);
+        if (node_currentFunction->symbol->size < 5)
+        {
+          t->symbol->is_registered_argument = TRUE;
+          t->symbol->memloc = node_currentFunction->symbol->size - 1;
+        }
+        else
+        {
+          t->symbol->is_registered_argument = FALSE;
+          t->symbol->memloc = (node_currentFunction->symbol->size - 4) * WORD_SIZE;
+        }
         insertNode(t->child[0]);
         break;
       case VoidParamK:
