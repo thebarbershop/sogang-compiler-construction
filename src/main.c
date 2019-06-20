@@ -43,7 +43,7 @@ FILE *code;
 int TraceScan = FALSE;
 int TraceParse = FALSE;
 int TraceAnalyze = FALSE;
-int TraceCode = FALSE;
+int TraceCode = TRUE;
 
 int Error = FALSE;
 
@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
     int fnlen = getBaseIndex(pgm);
     codefile = (char *)calloc(fnlen + 4, sizeof(char));
     strncpy(codefile, pgm, fnlen);
-    strcat(codefile, ".tm");
+    strcat(codefile, ".s");
     code = fopen(codefile, "w");
     // fclose(code); code = stdout;
     if (code == NULL)
