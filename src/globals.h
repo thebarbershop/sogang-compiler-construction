@@ -17,8 +17,14 @@
 
 #ifndef YYPARSER
 #include "y.tab.h"
-enum { ENDFILE = 0 };
-enum { ERROR = 65535 };
+enum
+{
+   ENDFILE = 0
+};
+enum
+{
+   ERROR = 65535
+};
 #endif
 
 #ifndef FALSE
@@ -29,13 +35,19 @@ enum { ERROR = 65535 };
 #define TRUE 1
 #endif
 
-typedef struct BucketListRec * BucketList;
-typedef struct SymbolTableRec * SymbolTable;
+typedef struct BucketListRec *BucketList;
+typedef struct SymbolTableRec *SymbolTable;
 
-enum { WORD_SIZE = 4 };
+enum
+{
+   WORD_SIZE = 4
+};
 
 /* MAXRESERVED = the number of reserved words */
-enum { MAXRESERVED = 6 };
+enum
+{
+   MAXRESERVED = 6
+};
 
 typedef int TokenType;
 
@@ -47,7 +59,10 @@ extern int lineno; /* source line number for listing */
 
 /**************************************************/
 /* The following lines are copied from scan.h     */
-enum { MAXTOKENLEN = 40 };
+enum
+{
+   MAXTOKENLEN = 40
+};
 
 /* tokenString array stores the lexeme of each token */
 extern char tokenString[MAXTOKENLEN + 1];
@@ -113,7 +128,10 @@ typedef enum
    Function
 } SymbolClass;
 
-enum { MAXCHILDREN = 3 };
+enum
+{
+   MAXCHILDREN = 3
+};
 
 typedef struct treeNode
 {
@@ -129,24 +147,27 @@ typedef struct treeNode
       ParamKind param;
    } kind;
    union {
-      TokenType op;        /* for operator */
-      int val;             /* for constant */
-      char *name;          /* for variable */
+      TokenType op; /* for operator */
+      int val;      /* for constant */
+      char *name;   /* for variable */
    } attr;
-   ExpType type; /* for type checking of exps */
+   ExpType type;      /* for type checking of exps */
    BucketList symbol; /* for symbol declaration & reference  */
 } TreeNode;
 
 /* SIZE is the size of the hash table */
-enum { HASHTABLE_SIZE = 211 };
+enum
+{
+   HASHTABLE_SIZE = 211
+};
 
 /* the list of line numbers of the source 
  * code in which a variable is referenced
  */
 typedef struct LineListRec
 {
-  int lineno;
-  struct LineListRec *next;
+   int lineno;
+   struct LineListRec *next;
 } * LineList;
 
 /* The record in the bucket lists for
@@ -157,23 +178,23 @@ typedef struct LineListRec
  */
 typedef struct BucketListRec
 {
-  LineList lines;  
-  SymbolClass symbol_class;
-  int is_registered_argument; /* only for parameters */
-  int is_array; /* only for VarK */
+   LineList lines;
+   SymbolClass symbol_class;
+   int is_registered_argument; /* only for parameters */
+   int is_array;               /* only for VarK */
 
-  /* int memloc
+   /* int memloc
    * - local variable/parameter >4: memory location
    * - parameter 0~3: register number ($a0~$a3)
    * - function: offset of local declaration */
-  int memloc;
-  /* int size
+   int memloc;
+   /* int size
    * - global/local array: array size
    * - function: number of parameters */
-  int size;
+   int size;
 
-  TreeNode *treeNode;
-  struct BucketListRec *next;
+   TreeNode *treeNode;
+   struct BucketListRec *next;
 } * BucketList;
 
 /* Each scope has its own hash table.
@@ -182,12 +203,12 @@ typedef struct BucketListRec
  */
 typedef struct SymbolTableRec
 {
-  int depth; /* global scope is of depth 0,
+   int depth; /* global scope is of depth 0,
               * and each compound statement increases depth by 1
               */
-  BucketList hashTable[HASHTABLE_SIZE];
-  struct SymbolTableRec *prev;
-  int location; /* memory location index */
+   BucketList hashTable[HASHTABLE_SIZE];
+   struct SymbolTableRec *prev;
+   int location; /* memory location index */
 } * SymbolTable;
 
 /**************************************************/

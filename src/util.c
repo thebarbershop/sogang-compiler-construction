@@ -33,15 +33,16 @@ void printToken(TokenType token, const char *tokenString)
   case RETURN:
   case VOID:
   case WHILE:
+  {
+    int i;
+    fprintf(listing, "\t\t");
+    for (i = 0; tokenString[i]; ++i)
     {
-      int i;
-      fprintf(listing, "\t\t");
-      for (i = 0; tokenString[i]; ++i) {
-        fputc(tokenString[i]-0x20, listing);
-      }
-      fprintf(listing, "\t\t%s\n", tokenString);
-      break;
+      fputc(tokenString[i] - 0x20, listing);
     }
+    fprintf(listing, "\t\t%s\n", tokenString);
+    break;
+  }
   /* special symbols */
   case PLUS:
   case MINUS:
@@ -75,29 +76,33 @@ void printToken(TokenType token, const char *tokenString)
   }
 }
 
-
 /* Linked list of allocated memory pointers */
-typedef struct _ptrList {
-   void *ptr;
-   struct _ptrList *next;
+typedef struct _ptrList
+{
+  void *ptr;
+  struct _ptrList *next;
 } PtrList;
 
-PtrList* ptrList;
+PtrList *ptrList;
 
 /* Maintains list of allocated memory pointers */
-void addPtr(void* ptr) {
-    PtrList *newPtr = malloc(sizeof(struct _ptrList));
-    newPtr->ptr = ptr;
-    newPtr->next = ptrList;
-    ptrList = newPtr;
+void addPtr(void *ptr)
+{
+  PtrList *newPtr = malloc(sizeof(struct _ptrList));
+  newPtr->ptr = ptr;
+  newPtr->next = ptrList;
+  ptrList = newPtr;
 }
 
 /* Destroys allocated memory pointers */
-void destroyPtr(void) {
+void destroyPtr(void)
+{
   PtrList *nodeToDestroy;
-  while(ptrList) {
+  while (ptrList)
+  {
     nodeToDestroy = ptrList;
-    if(nodeToDestroy->ptr) {
+    if (nodeToDestroy->ptr)
+    {
       free(nodeToDestroy->ptr);
     }
     ptrList = ptrList->next;
@@ -118,7 +123,8 @@ char *copyString(char *s)
   t = malloc((size_t)n);
   if (t == NULL)
     fprintf(listing, "Out of memory error at line %d\n", lineno);
-  else {
+  else
+  {
     strcpy(t, s);
     addPtr(t);
   }
@@ -152,7 +158,8 @@ void printTree(TreeNode *tree)
   int sibling = 0;
   while (tree != NULL)
   {
-    if(!sibling && tree->sibling != NULL) {
+    if (!sibling && tree->sibling != NULL)
+    {
       printSpaces();
       fprintf(listing, "(\n");
       INDENT;
@@ -219,12 +226,14 @@ void printTree(TreeNode *tree)
     {
       switch (tree->kind.type)
       {
-      char *type;
+        char *type;
       case TypeGeneralK:
-        if(tree->type == Integer) {
+        if (tree->type == Integer)
+        {
           type = "int";
         }
-        else {
+        else
+        {
           type = "void";
         }
         fprintf(listing, "Type: %s\n", type);
@@ -251,12 +260,14 @@ void printTree(TreeNode *tree)
     for (i = 0; i < MAXCHILDREN; ++i)
       printTree(tree->child[i]);
     tree = tree->sibling;
-    if(sibling && tree == NULL){
+    if (sibling && tree == NULL)
+    {
       UNINDENT;
       printSpaces();
       fprintf(listing, ")\n");
     }
-    if(tree!=NULL) {
+    if (tree != NULL)
+    {
       ++sibling;
     }
   }
@@ -264,18 +275,30 @@ void printTree(TreeNode *tree)
 }
 
 /* Return string for the given speration */
-char *getOp(TokenType op) {
-  switch(op) {
-    case PLUS:  return "+" ;  
-    case MINUS: return "-" ;  
-    case TIMES: return "*" ;  
-    case OVER:  return "/" ;  
-    case LT:    return "<" ;  
-    case LTE:   return "<=";  
-    case GT:    return ">" ;  
-    case GTE:   return ">=";    
-    case EQ:    return "==";
-    case NEQ:   return "!=";
+char *getOp(TokenType op)
+{
+  switch (op)
+  {
+  case PLUS:
+    return "+";
+  case MINUS:
+    return "-";
+  case TIMES:
+    return "*";
+  case OVER:
+    return "/";
+  case LT:
+    return "<";
+  case LTE:
+    return "<=";
+  case GT:
+    return ">";
+  case GTE:
+    return ">=";
+  case EQ:
+    return "==";
+  case NEQ:
+    return "!=";
   }
   return "";
 }
@@ -286,10 +309,12 @@ int getBaseIndex(const char *fullPath)
 {
   size_t i;
   size_t len = strlen(fullPath);
-  for (i = len - 1; i; --i) {
-    if(fullPath[i] == '.')
+  for (i = len - 1; i; --i)
+  {
+    if (fullPath[i] == '.')
       break;
-    if(fullPath[i] == '/') {
+    if (fullPath[i] == '/')
+    {
       i = -1;
       break;
     }
