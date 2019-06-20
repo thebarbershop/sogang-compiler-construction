@@ -25,7 +25,7 @@ static void cgenPush(const char *reg);
 static void cgenPrintString(const char *symbol);
 static int getLabel(void);
 static void cgenArrayAddress(TreeNode *node);
-static char *getName(TreeNode *node);
+#define getName(node) (node->symbol->treeNode->attr.name)
 
 static int returnLabel; /* return label used in a function */
 
@@ -485,11 +485,11 @@ static void cgenGlobal(TreeNode *node)
     {
       if (strlen(node->symbol->treeNode->attr.name) == 1)
       {
-        char buff[3];
+        char *buff = malloc(3);
+        addPtr(buff);
         buff[0] = '_';
         buff[1] = node->symbol->treeNode->attr.name[0];
         buff[2] = '\0';
-        node->symbol->treeNode->attr.name = buff;
         node->symbol->treeNode->attr.name = buff;
       }
       switch (node->kind.decl)
@@ -514,12 +514,6 @@ static int getLabel(void)
 {
   static unsigned int labelN = 0;
   return labelN++;
-}
-
-/* Returns name of the symbol */
-static char *getName(TreeNode *node)
-{
-  return node->symbol->treeNode->attr.name;
 }
 
 /* Genetates code to calculate address

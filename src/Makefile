@@ -1,6 +1,7 @@
 CC = gcc
 
-CFLAGS=-std=c11 -Wall -Werror -ggdb -O0 -Wpedantic
+
+CFLAGS=-std=c11 -Wall -Werror -O3 -Wpedantic
 
 .SUFFIXES: .c .o
 
@@ -26,4 +27,4 @@ y.tab.c: $(BISONRAW)
 
 .PHONY: clean
 clean:
-	rm -f $(OBJS) $(BINARY) $(FLEXC) $(BISONC) $(BISONH) $(BISONOUTPUT) ../sample/*.s
+	rm -f $(OBJS) $(BINARY) $(FLEXC) $(BISONC) $(BISONH) $(BISONOUTPUT)
