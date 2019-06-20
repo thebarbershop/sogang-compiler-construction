@@ -54,11 +54,11 @@ void emitLabel(const char *op, int label);
 
 /* Procedure emitLabel prints a code line
  * that indicates a label */
-void emitLabelDecl(int label);
+void emitLabelNum(int label);
 
 /* Procedure emitLabel prints a code line
  * that indicates a symbol */
-void emitSymbolDecl(const char *symbol);
+void emitLabelStr(const char *symbol);
 
 /* Procedure emitRegLabel prints a code line
  * that takes one register and one label */

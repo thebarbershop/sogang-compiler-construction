@@ -6,7 +6,7 @@
 /* Modified by Eom Taegyung                         */
 /****************************************************/
 
-#include "globals.h"  
+#include "globals.h"
 #include "util.h"
 #include <assert.h>
 
@@ -22,7 +22,7 @@
 
 #if NO_PARSE
 #else
-#include "parse.h" 
+#include "parse.h"
 #include "y.tab.h"
 #if !NO_ANALYZE
 #include "symtab.h"
@@ -42,22 +42,23 @@ FILE *code;
 /* allocate and set tracing flags */
 int TraceScan = FALSE;
 int TraceParse = FALSE;
-int TraceAnalyze = FALSE;
+int TraceAnalyze = TRUE;
 int TraceCode = TRUE;
 
 int Error = FALSE;
 
-static void cleanup(void) {
+static void cleanup(void)
+{
   yylex_destroy();
   destroyPtr();
 }
 int main(int argc, char *argv[])
 {
   int i;
-  #if !NO_PARSE
+#if !NO_PARSE
   TreeNode *syntaxTree;
   TreeNode *mainNode;
-  #endif
+#endif
   char pgm[120]; /* source code file name */
   if (argc != 2)
   {
@@ -74,9 +75,10 @@ int main(int argc, char *argv[])
     exit(1);
   }
   listing = stdout; /* send listing to screen */
-  if(TraceScan) {
+  if (TraceScan)
+  {
     fprintf(listing, "\tline number\ttoken\t\tlexeme\n");
-    for(i = 0; i < 54; ++i)
+    for (i = 0; i < 54; ++i)
       fputc('-', listing);
     fputc('\n', listing);
   }
@@ -93,26 +95,28 @@ int main(int argc, char *argv[])
 #if !NO_ANALYZE
   if (!Error)
   {
-    if(TraceAnalyze)
+    if (TraceAnalyze)
       fprintf(listing, "Building Symbol Tree..\n\n");
     buildSymtab(syntaxTree);
     decrementScope(); /* Destroy the global scope */
-    if(!Error && TraceAnalyze)
-        fprintf(listing, "No error detected.\n");
+    if (!Error && TraceAnalyze)
+      fprintf(listing, "No error detected.\n");
   }
-  if(!Error)
+  if (!Error)
   {
-      if(TraceAnalyze)
+    if (TraceAnalyze)
       fprintf(listing, "Performing Type Check..\n");
-      typeCheck(syntaxTree);
-      if(!Error && TraceAnalyze)
-        fprintf(listing, "No error detected.\n");
+    typeCheck(syntaxTree);
+    if (!Error && TraceAnalyze)
+      fprintf(listing, "No error detected.\n");
   }
-  if(!Error) {
-    if(TraceAnalyze)
+  if (!Error)
+  {
+    if (TraceAnalyze)
       fprintf(listing, "Finding and checking main function..\n");
     mainNode = mainCheck(syntaxTree);
-    if(!Error && TraceAnalyze) {
+    if (!Error && TraceAnalyze)
+    {
       fprintf(listing, "Function \'main\' found at line %d\n", mainNode->lineno);
       fprintf(listing, "No error detected.\n");
     }

@@ -14,14 +14,16 @@
 /* Procedure emitComment prints a comment line 
  * with comment c in the code file
  */
-void emitComment( const char * c )
-{ if (TraceCode && c && c[0]) fprintf(code,"# %s\n",c);
+void emitComment(const char *c)
+{
+  if (TraceCode && c && c[0])
+    fprintf(code, "# %s\n", c);
 }
 
 /* Procedure emitCode prints a code line */
 void emitCode(const char *codeLine)
 {
- fprintf(code, "%s\n", codeLine);
+  fprintf(code, "%s\n", codeLine);
 }
 
 /* Procedure emitRegImm prints a code line
@@ -35,20 +37,20 @@ void emitRegImm(const char *op, const char *reg, int imm)
 /* Procedure emitRegAddr prints a code line
  * that takes one register and one address
  */
-void emitRegAddr(const char *op, const char *reg1, const char* symbol, int imm, const char *reg2)
+void emitRegAddr(const char *op, const char *reg1, const char *symbol, int imm, const char *reg2)
 {
   fprintf(code, "%s %s ", op, reg1);
-  if(!symbol && !imm && reg2)
+  if (!symbol && !imm && reg2)
     fprintf(code, "(%s)\n", reg2);
-  else if(!symbol && imm && !reg2)
+  else if (!symbol && imm && !reg2)
     fprintf(code, "%d\n", imm);
-  else if(!symbol && imm && reg2)
+  else if (!symbol && imm && reg2)
     fprintf(code, "%d(%s)\n", imm, reg2);
-  else if(symbol && !imm && !reg2)
+  else if (symbol && !imm && !reg2)
     fprintf(code, "%s\n", symbol);
-  else if(symbol && imm && !reg2)
+  else if (symbol && imm && !reg2)
     fprintf(code, "%s+%d\n", symbol, imm);
-  else if(symbol && imm && reg2)
+  else if (symbol && imm && reg2)
     fprintf(code, "%s+%d(%s)\n", symbol, imm, reg2);
 }
 
@@ -98,14 +100,14 @@ void emitRegLabel(const char *op, const char *reg, int label)
 
 /* Procedure emitLabel prints a code line
  * that indicates a label */
-void emitLabelDecl(int label)
+void emitLabelNum(int label)
 {
   fprintf(code, "L%d:\n", label);
 }
 
 /* Procedure emitLabel prints a code line
  * that indicates a symbol */
-void emitSymbolDecl(const char *symbol)
+void emitLabelStr(const char *symbol)
 {
   fprintf(code, "%s:\n", symbol);
 }
