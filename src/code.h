@@ -26,7 +26,7 @@ void emitRegImm(const char *op, const char *reg, int imm);
 /* Procedure emitRegAddr prints a code line
  * that takes one register and one address
  */
-void emitRegAddr(const char *op, const char *reg1, int offset, const char *reg2);
+void emitRegAddr(const char *op, const char *reg1, const char *symbol, int imm, const char *reg2);
 
 /* Procedure emitRegAddr prints a code line
  * that takes two registers and one immidiate
@@ -63,9 +63,5 @@ void emitSymbolDecl(const char *symbol);
 /* Procedure emitRegLabel prints a code line
  * that takes one register and one label */
 void emitRegLabel(const char *op, const char *reg, int label);
-
-/* Procedure emitRegSymbol prints a code line
- * that takes one register and one symbol */
-void emitRegSymbol(const char *op, const char *reg, const char *symbol);
 
 #endif

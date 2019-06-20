@@ -35,12 +35,21 @@ void emitRegImm(const char *op, const char *reg, int imm)
 /* Procedure emitRegAddr prints a code line
  * that takes one register and one address
  */
-void emitRegAddr(const char *op, const char *reg1, int offset, const char *reg2)
+void emitRegAddr(const char *op, const char *reg1, const char* symbol, int imm, const char *reg2)
 {
   fprintf(code, "%s %s ", op, reg1);
-  if(offset)
-    fprintf(code, "%d", offset);
-  fprintf(code, "(%s)\n", reg2);
+  if(!symbol && !imm && reg2)
+    fprintf(code, "(%s)\n", reg2);
+  else if(!symbol && imm && !reg2)
+    fprintf(code, "%d\n", imm);
+  else if(!symbol && imm && reg2)
+    fprintf(code, "%d(%s)\n", imm, reg2);
+  else if(symbol && !imm && !reg2)
+    fprintf(code, "%s\n", symbol);
+  else if(symbol && imm && !reg2)
+    fprintf(code, "%s+%d\n", symbol, imm);
+  else if(symbol && imm && reg2)
+    fprintf(code, "%s+%d(%s)\n", symbol, imm, reg2);
 }
 
 /* Procedure emitRegAddr prints a code line
@@ -100,13 +109,3 @@ void emitSymbolDecl(const char *symbol)
 {
   fprintf(code, "%s:\n", symbol);
 }
-
-
-
-/* Procedure emitRegSymbol prints a code line
- * that takes one register and one symbol */
-void emitRegSymbol(const char *op, const char *reg, const char *symbol)
-{
-  fprintf(code, "%s %s %s\n", op, reg, symbol);
-}
-
