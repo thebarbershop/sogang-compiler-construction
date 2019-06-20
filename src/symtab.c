@@ -214,33 +214,33 @@ void printSymTab(FILE *listing)
       while (l != NULL)
       {
         LineList t;
-        fprintf(listing, "%-12s ", l->treeNode->attr.name);        /* Symbol Name */
-        fprintf(listing, "%5d  ", currentScopeSymbolTable->depth); /* Scope */
+        fprintf(listing, "%-12s ", l->treeNode->attr.name);
+        fprintf(listing, "%5d  ", currentScopeSymbolTable->depth);
         if (isGlobalScope())
-          fprintf(listing, "%6c  ", '-'); /* Offset */
+          fprintf(listing, "%6c  ", '-');
         else
         {
           if (l->is_registered_argument)
-            fprintf(listing, "$a%d     ", l->memloc); /* Offset */
+            fprintf(listing, "$a%d     ", l->memloc);
           else
-            fprintf(listing, "%6d  ", l->memloc); /* Offset */
+            fprintf(listing, "%6d  ", l->memloc);
         }
         if (l->symbol_class == Function)
-          fprintf(listing, "%5d  ", l->memloc); /* Stack */
+          fprintf(listing, "%5d  ", l->memloc);
         else
-          fprintf(listing, "%5c  ", '-');                                /* Stack */
-        fprintf(listing, "%-9s ", symbol_class_string[l->symbol_class]); /* Class */
+          fprintf(listing, "%5c  ", '-');
+        fprintf(listing, "%-9s ", symbol_class_string[l->symbol_class]);
         if (l->is_array)
-          fprintf(listing, "%5d  ", l->size); /* Array */
+          fprintf(listing, "%5d  ", l->size);
         else
-          fprintf(listing, "%5c  ", '-'); /* Array */
+          fprintf(listing, "%5c  ", '-');
         if (l->symbol_class == Function)
-          fprintf(listing, "%6d  ", l->size); /* Param. */
+          fprintf(listing, "%6d  ", l->size);
         else
-          fprintf(listing, "%6c  ", '-');                              /* Param. */
-        fprintf(listing, "%-5s ", exp_type_string[l->treeNode->type]); /* Type */
+          fprintf(listing, "%6c  ", '-');
+        fprintf(listing, "%-5s ", exp_type_string[l->treeNode->type]);
         for (t = l->lines; t; t = t->next)
-          fprintf(listing, "%4d ", t->lineno); /* LineNo */
+          fprintf(listing, "%4d ", t->lineno);
         fprintf(listing, "\n");
         l = l->next;
       }
