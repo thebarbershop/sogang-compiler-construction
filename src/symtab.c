@@ -107,7 +107,7 @@ static BucketList st_insert(char *name, int lineno, int loc)
     l->lines->next = NULL;
     l->memloc = loc;
     l->size = 0;
-    l->next = NULL;
+    l->is_registered_argument = 0;
     l->next = currentScopeSymbolTable->hashTable[h];
     currentScopeSymbolTable->hashTable[h] = l;
   }
@@ -204,8 +204,8 @@ int registerSymbol(TreeNode *t, SymbolClass symbol_class, int is_array, ExpType 
 void printSymTab(FILE *listing)
 {
   int i;
-  fprintf(listing, "Symbol Name  Scope  Location  Symbol Class  Array?  Size  Type  Line Numbers\n");
-  fprintf(listing, "----------------------------------------------------------------------------------\n");
+  fprintf(listing, "Symbol Name  Scope  Offset  Stack  Class     Array  Param.  Type  Line Numbers\n");
+  fprintf(listing, "------------------------------------------------------------------------------\n");
   for (i = 0; i < HASHTABLE_SIZE; ++i)
   {
     if (currentScopeSymbolTable->hashTable[i] != NULL)
@@ -213,25 +213,34 @@ void printSymTab(FILE *listing)
       BucketList l = currentScopeSymbolTable->hashTable[i];
       while (l != NULL)
       {
-        LineList t = l->lines;
-        fprintf(listing, "%-12s ", l->treeNode->attr.name);
-        fprintf(listing, "%-6d ", currentScopeSymbolTable->depth);
-        if (isGlobalScope() && l->symbol_class != Function)
-          fprintf(listing, "%-9c ", '-');
+        LineList t;
+        fprintf(listing, "%-12s ", l->treeNode->attr.name);        /* Symbol Name */
+        fprintf(listing, "%5d  ", currentScopeSymbolTable->depth); /* Scope */
+        if (isGlobalScope())
+          fprintf(listing, "%6c  ", '-'); /* Offset */
         else
-          fprintf(listing, "%-9d ", l->memloc);
-        fprintf(listing, "%-13s ", symbol_class_string[l->symbol_class]);
-        fprintf(listing, "%-7s ", l->is_array ? "Y" : "N");
-        if (l->is_array || l->symbol_class == Function)
-          fprintf(listing, "%-5d ", l->size);
-        else
-          fprintf(listing, "%-5s ", "-");
-        fprintf(listing, "%-5s ", exp_type_string[l->treeNode->type]);
-        while (t != NULL)
         {
-          fprintf(listing, "%4d ", t->lineno);
-          t = t->next;
+          if (l->is_registered_argument)
+            fprintf(listing, "$a%d     ", l->memloc); /* Offset */
+          else
+            fprintf(listing, "%6d  ", l->memloc); /* Offset */
         }
+        if (l->symbol_class == Function)
+          fprintf(listing, "%5d  ", l->memloc); /* Stack */
+        else
+          fprintf(listing, "%5c  ", '-');                                /* Stack */
+        fprintf(listing, "%-9s ", symbol_class_string[l->symbol_class]); /* Class */
+        if (l->is_array)
+          fprintf(listing, "%5d  ", l->size); /* Array */
+        else
+          fprintf(listing, "%5c  ", '-'); /* Array */
+        if (l->symbol_class == Function)
+          fprintf(listing, "%6d  ", l->size); /* Param. */
+        else
+          fprintf(listing, "%6c  ", '-');                              /* Param. */
+        fprintf(listing, "%-5s ", exp_type_string[l->treeNode->type]); /* Type */
+        for (t = l->lines; t; t = t->next)
+          fprintf(listing, "%4d ", t->lineno); /* LineNo */
         fprintf(listing, "\n");
         l = l->next;
       }
