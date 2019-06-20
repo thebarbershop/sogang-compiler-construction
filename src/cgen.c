@@ -20,14 +20,13 @@ static void cgenExp( TreeNode * node);
 static void cgenOp(TreeNode *node);
 static void cgenAssign(TreeNode *node);
 static void cgenCompound(TreeNode *node);
-static void cgenPop(char *reg);
-static void cgenPush(char *reg); 
-static void cgenString(char *label);
-static void cgenLabel(char *label);
-static char* getLabel(void);
+static void cgenPop(const char *reg);
+static void cgenPush(const char *reg); 
+static void cgenPrintString(const char* symbol);
+static int getLabel(void);
 static void cgenArrayAddress(TreeNode *node);
 
-static char *returnLabel; /* return label used in a function */
+static int returnLabel; /* return label used in a function */
 
 /* Functions to generate decorated strings  */
 /* Generate string "symbol±imm(register)" */
@@ -35,14 +34,6 @@ static char *addrSymbolImmReg(const char *symbol, char sign, int imm, const char
 {
   char* buff = malloc(strlen(symbol)+strlen(reg)+14);
   sprintf(buff, "%s%c%d(%s)", symbol, sign, imm, reg);
-  addPtr(buff);
-  return buff;
-}
-
-static char *underbar(const char *label)
-{
-  char* buff = malloc(strlen(label)+2);
-  sprintf(buff, "_%s", label);
   addPtr(buff);
   return buff;
 }
@@ -63,45 +54,45 @@ static void cgenStmt( TreeNode * node)
     break;
   case SelectionK:
   {
-    char* followingLabel = getLabel();
+    int followingLabel = getLabel();
     emitComment("->selection");
     cgenExp(node->child[0]);
     if(node->child[2])
     { /* Has else statement */
-      char* elseLabel = getLabel();
-      emitRegReg("beqz", "$t0", elseLabel);
+      int elseLabel = getLabel();
+      emitRegLabel("beqz", "$t0", elseLabel);
       cgen(node->child[1]);
-      emitReg("b", followingLabel);
-      cgenLabel(elseLabel);
+      emitLabel("b", followingLabel);
+      emitLabelDecl(elseLabel);
       cgen(node->child[2]);
     }
     else
     { /* No else statement */
-      emitRegReg("beqz", "$t0", followingLabel);
+      emitRegLabel("beqz", "$t0", followingLabel);
       cgen(node->child[1]);
     }
-    cgenLabel(followingLabel);
+    emitLabelDecl(followingLabel);
     emitComment("<-selection");
     break;
   }
   case IterationK:
   {
-    char* conditionLabel = getLabel();
-    char* followingLabel = getLabel();
+    int conditionLabel = getLabel();
+    int followingLabel = getLabel();
     emitComment("->iteration");
-    cgenLabel(conditionLabel);
+    emitLabelDecl(conditionLabel);
     cgenExp(node->child[0]);
-    emitRegReg("beqz", "$t0", followingLabel);
+    emitRegLabel("beqz", "$t0", followingLabel);
     cgen(node->child[1]);
-    emitReg("b", conditionLabel);
-    cgenLabel(followingLabel);
+    emitLabel("b", conditionLabel);
+    emitLabelDecl(followingLabel);
     emitComment("<-iteration");
     break;
   }
   case ReturnK:
     cgenExp(node->child[0]);
     emitRegReg("move", "$v0", "$t0");
-    emitReg("j", returnLabel);
+    emitLabel("j", returnLabel);
     break;
   }
 } /* cgenStmt */
@@ -136,12 +127,12 @@ static void cgenExp( TreeNode * node)
       else
       {
         if(node->symbol->symbol_class == Global)
-          emitRegReg("lw", "$t0", underbar(node->attr.name));
+          emitRegSymbol("lw", "$t0", node->attr.name);
         else
         {
           char *buff = malloc(strlen(node->attr.name)+20);
           int offset = node->symbol->memloc;
-          if(returnLabel && offset<0) offset -= 8;
+          if(returnLabel > 0 && offset<0) offset -= 8;
           sprintf(buff, "-> local variable %s", node->attr.name);
           emitComment(buff);
           emitRegReg("move", "$t1", "$fp");
@@ -167,7 +158,7 @@ static void cgenExp( TreeNode * node)
       {
         /* Read integer from stdin to $v0 */
         emitComment("->call \'input\'");
-        cgenString("_inputStr");
+        cgenPrintString("_inputStr");
         emitRegImm("li", "$v0", 5); /* syscall #5: read int */
         emitCode("syscall");
         emitRegReg("move", "$t0", "$v0");
@@ -178,11 +169,11 @@ static void cgenExp( TreeNode * node)
         /* Print integer from $a0 to stdout */
         emitComment("->call \'output\'");
         cgenExp(node->child[0]); /* evaluate parameter */
-        cgenString("_outputStr");
+        cgenPrintString("_outputStr");
         emitRegReg("move", "$a0", "$t0");
         emitRegImm("li", "$v0", 1); /* syscall #1: print int */
         emitCode("syscall");
-        cgenString("_newline");
+        cgenPrintString("_newline");
         emitComment("<-call \'output\'");
       }
       else
@@ -199,7 +190,7 @@ static void cgenExp( TreeNode * node)
           emitRegAddr("sw", "$t0", WORD_SIZE*i, "$sp");
         }
         fprintf(stderr, "\n");
-        emitReg("jal", underbar(node->attr.name));
+        emitReg("jal", node->attr.name);
         emitRegReg("move", "$t0", "$v0");
         /* pop arguments from stack */
         emitRegRegImm("addu", "$sp", "$sp", WORD_SIZE*(node->symbol->size));
@@ -212,10 +203,10 @@ static void cgenExp( TreeNode * node)
 /* Procedure cgenString generates code
  * to print null-terminated ascii string
  * from the given label */
-static void cgenString(char *label)
+static void cgenPrintString(const char* symbol)
 {
   emitRegImm("li", "$v0", 4); /* syscall #4: print string */
-  emitRegReg("la", "$a0", label);
+  emitRegSymbol("la", "$a0", symbol);
   emitCode("syscall");
 } /* cgenString */
 
@@ -285,7 +276,7 @@ static void cgenAssign(TreeNode *node)
   if(node->child[0]->symbol->symbol_class == Global)
   { /* generate address computation string */
     if(node->child[0]->kind.exp == VarK) {
-      addressLHS = underbar(node->child[0]->attr.name);
+      addressLHS = node->child[0]->attr.name;
     }
     else if(node->child[0]->kind.exp == ArrK)
     {
@@ -294,7 +285,7 @@ static void cgenAssign(TreeNode *node)
       /* offset is WORD_SIZE*index */
       emitRegRegImm("mul", "$t0", "$t0", WORD_SIZE);
       /* addressing mode: symbol+0(register) */
-      addressLHS = addrSymbolImmReg(underbar(node->child[0]->attr.name), '+', 0, "$t0");
+      addressLHS = addrSymbolImmReg(node->child[0]->attr.name, '+', 0, "$t0");
     }
   }
   else
@@ -315,7 +306,7 @@ static void cgenAssign(TreeNode *node)
     {
       /* $fp + memloc */
       int offset = node->child[0]->symbol->memloc;
-      if(returnLabel && offset < 0) offset -= 8;
+      if(returnLabel > 0 && offset < 0) offset -= 8;
       emitRegReg("move", "$t2", "$fp");
       emitRegImm("addu", "$t2", offset);
       addressLHS = parentheses("$t2");
@@ -359,7 +350,7 @@ static void cgen(TreeNode * node)
 
 /* Procedure cgenPop generates code to
  * pop the top of stack to register */
-static void cgenPop(char *reg)
+static void cgenPop(const char *reg)
 {
   emitRegAddr("lw", reg, 0, "$sp");
   emitRegRegImm("addu", "$sp", "$sp", WORD_SIZE);
@@ -367,20 +358,10 @@ static void cgenPop(char *reg)
 
 /* Procedure cgenPush generates code to
  * push the register to the top of stack */
-static void cgenPush(char *reg)
+static void cgenPush(const char *reg)
 {
   emitRegRegImm("subu", "$sp", "$sp", WORD_SIZE);
   emitRegAddr("sw", reg, 0, "$sp");
-}
-
-/* Procedure cgenLabel generates code to
- * define a label */
-static void cgenLabel(char *label)
-{
-  char *buff = malloc(strlen(label)+2);
-  sprintf(buff, "%s:", label);
-  emitCode(buff);
-  free(buff);
 }
 
 enum { TEXT, DATA } globalEmitMode = DATA;
@@ -412,7 +393,7 @@ static void cgenGlobalVarDecl(char *name, int size)
   }
   sprintf(buff, ".align %d", ALIGN);
   emitCode(buff);
-  sprintf(buff, "_%s: .space %d", name, size);
+  sprintf(buff, "%s: .space %d", name, size);
   emitCode(buff);
   sprintf(buff, "<-global variable \'%s\'", name);
   emitComment(buff);
@@ -431,7 +412,7 @@ static void cgenFunDecl(TreeNode *node)
     emitCode(".text");
   }
 
-  if(!strcmp(node->attr.name, "main"))
+  if(!strcmp(node->attr.name, "_main"))
   {
     emitCode(".globl main");
     emitCode("main:");
@@ -441,8 +422,7 @@ static void cgenFunDecl(TreeNode *node)
   else
   {
     returnLabel = getLabel();
-    sprintf(buff, "_%s:", node->attr.name);
-    emitCode(buff);
+    emitSymbolDecl(node->attr.name);
     emitComment("entry routine");
     cgenPush("$ra"); /* save return address */
     cgenPush("$fp"); /* save frame pointer */
@@ -455,7 +435,7 @@ static void cgenFunDecl(TreeNode *node)
   if(strcmp(node->attr.name, "main")){ /* only for non-main */
     emitComment("exit routine");
     if(node->type == Integer)
-      cgenLabel(returnLabel);
+      emitLabelDecl(returnLabel);
     
     emitRegRegImm("subu", "$sp", "$fp", 2*WORD_SIZE);
     cgenPop("$fp"); /* restore frame pointer */
@@ -463,7 +443,7 @@ static void cgenFunDecl(TreeNode *node)
     emitReg("jr", "$ra");
     sprintf(buff, "<-function \'%s\'", node->attr.name);
     emitComment(buff);
-    returnLabel = NULL;
+    returnLabel = -1;
   }
   free(buff);
 }
@@ -492,19 +472,11 @@ static void cgenGlobal(TreeNode *node)
   }
 }
 
-/* Procedure getLabel returns a new label */
-static char* getLabel(void)
+/* Procedure getLabel returns a new label number */
+static int getLabel(void)
 {
   static unsigned int labelN = 0;
-
-  char* buff;
-  int tmp, lengthN;
-  for(lengthN = 0, tmp = labelN; tmp; ++lengthN)
-    tmp /= 10;
-  buff = malloc(lengthN+3);
-  sprintf(buff, "L%d", labelN++);
-  addPtr(buff);
-  return buff;
+  return labelN++;
 }
 
 /* Procedure cgenArrayAddress generates
@@ -513,9 +485,9 @@ static char* getLabel(void)
 static void cgenArrayAddress(TreeNode *node)
 {
   int offset = node->symbol->memloc;
-  if(returnLabel && offset<0) offset -= 8;
+  if(returnLabel > 0 && offset<0) offset -= 8;
   if(node->symbol->symbol_class == Global)
-    emitRegReg("la", "$t0", underbar(node->attr.name));
+    emitRegSymbol("la", "$t0", node->attr.name);
   else if(node->symbol->symbol_class == Local) {
     emitRegReg("move", "$t0", "$fp");
     emitRegImm("addu", "$t0", offset);

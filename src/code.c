@@ -72,3 +72,41 @@ void emitRegRegReg(const char *op, const char *reg1, const char *reg2, const cha
 {
   fprintf(code, "%s %s %s %s\n", op, reg1, reg2, reg3);
 }
+
+/* Procedure emitLabel prints a code line
+ * that takes one label number */
+void emitLabel(const char *op, int label)
+{
+  fprintf(code, "%s _%d\n", op, label);
+}
+
+/* Procedure emitRegLabel prints a code line
+ * that takes one register and one label */
+void emitRegLabel(const char *op, const char *reg, int label)
+{
+  fprintf(code, "%s %s _%d\n", op, reg, label);
+}
+
+/* Procedure emitLabel prints a code line
+ * that indicates a label */
+void emitLabelDecl(int label)
+{
+  fprintf(code, "_%d:\n", label);
+}
+
+/* Procedure emitLabel prints a code line
+ * that indicates a symbol */
+void emitSymbolDecl(const char *symbol)
+{
+  fprintf(code, "%s:\n", symbol);
+}
+
+
+
+/* Procedure emitRegSymbol prints a code line
+ * that takes one register and one symbol */
+void emitRegSymbol(const char *op, const char *reg, const char *symbol)
+{
+  fprintf(code, "%s %s %s\n", op, reg, symbol);
+}
+
