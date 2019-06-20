@@ -42,8 +42,8 @@ FILE *code;
 /* allocate and set tracing flags */
 int TraceScan = FALSE;
 int TraceParse = FALSE;
-int TraceAnalyze = TRUE;
-int TraceCode = TRUE;
+int TraceAnalyze = FALSE;
+int TraceCode = FALSE;
 
 int Error = FALSE;
 
@@ -130,7 +130,6 @@ int main(int argc, char *argv[])
     strncpy(codefile, pgm, fnlen);
     strcat(codefile, ".s");
     code = fopen(codefile, "w");
-    // fclose(code); code = stdout;
     if (code == NULL)
     {
       printf("Unable to open %s\n", codefile);
