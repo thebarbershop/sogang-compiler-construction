@@ -144,10 +144,10 @@ static void insertNode(TreeNode *t)
         insertNode(t->child[0]);
         setCurrentScopeMemoryLocation(4);  /* memory offset for paramters starts before control link */
         insertNode(t->child[1]);           /* This child takes care of parameter declarations */
-        setCurrentScopeMemoryLocation(-4); /* memory offset for local symbols start after return address */
+        setCurrentScopeMemoryLocation(-8); /* memory offset for local symbols start after return address */
+        t->symbol->memloc = -4;
         flag_functionDeclared = TRUE;
         insertNode(t->child[2]); /* This child takes care of function body */
-        t->symbol->memloc -= 4;
         decrementScope();
         node_currentFunction = NULL;
         break;
