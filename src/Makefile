@@ -26,4 +26,4 @@ y.tab.c: $(BISONRAW)
 
 .PHONY: clean
 clean:
-	rm -f $(OBJS) $(BINARY) $(FLEXC) $(BISONC) $(BISONH) $(BISONOUTPUT) ../sample/*.tm
+	rm -f $(OBJS) $(BINARY) $(FLEXC) $(BISONC) $(BISONH) $(BISONOUTPUT) ../sample/*.s
