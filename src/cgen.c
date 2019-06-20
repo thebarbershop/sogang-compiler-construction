@@ -48,7 +48,7 @@ static void cgenStmt(TreeNode *node)
       emitRegLabel("beqz", "$v0", elseLabel);
       cgen(node->child[1]);
       emitLabel("b", followingLabel);
-      emitLabelDecl(elseLabel);
+      emitLabelNum(elseLabel);
       cgen(node->child[2]);
     }
     else
@@ -56,7 +56,7 @@ static void cgenStmt(TreeNode *node)
       emitRegLabel("beqz", "$v0", followingLabel);
       cgen(node->child[1]);
     }
-    emitLabelDecl(followingLabel);
+    emitLabelNum(followingLabel);
     emitComment("<-selection");
     break;
   }
@@ -65,12 +65,12 @@ static void cgenStmt(TreeNode *node)
     int conditionLabel = getLabel();
     int followingLabel = getLabel();
     emitComment("->iteration");
-    emitLabelDecl(conditionLabel);
+    emitLabelNum(conditionLabel);
     cgenExp(node->child[0]);
     emitRegLabel("beqz", "$v0", followingLabel);
     cgen(node->child[1]);
     emitLabel("b", conditionLabel);
-    emitLabelDecl(followingLabel);
+    emitLabelNum(followingLabel);
     emitComment("<-iteration");
     break;
   }
@@ -134,9 +134,9 @@ static void cgenExp(TreeNode *node)
     cgenArrayAddress(node);
     cgenPush("$v0");
     cgenExp(node->child[0]);
-    cgenPop("$t1"); /* array base: $t1, index: $v0 */
+    cgenPop("$t0"); /* array base: $t0, index: $v0 */
     emitRegRegImm("mul", "$v0", "$v0", WORD_SIZE);
-    emitRegRegReg("addu", "$v0", "$v0", "$t1");
+    emitRegRegReg("addu", "$v0", "$v0", "$t0");
     emitRegAddr("lw", "$v0", NULL, 0, "$v0");
     break;
   case CallK:
@@ -155,17 +155,19 @@ static void cgenExp(TreeNode *node)
       emitComment("->call \'output\'");
       cgenExp(node->child[0]); /* evaluate parameter */
       cgenPrintString("_outputStr");
+      emitRegReg("move", "$t0", "$a0");
       emitRegReg("move", "$a0", "$v0");
       emitRegImm("li", "$v0", 1); /* syscall #1: print int */
       emitCode("syscall");
       cgenPrintString("_newline");
       emitComment("<-call \'output\'");
+      emitRegReg("move", "$a0", "$t0");
     }
     else
     {
+      /* Calling sequence */
       TreeNode *params;
       int i;
-      /* General function call */
       emitComment("->call function");
       /* Push arguments to stack */
       emitRegRegImm("subu", "$sp", "$sp", WORD_SIZE * (node->symbol->size));
@@ -174,7 +176,8 @@ static void cgenExp(TreeNode *node)
         cgenExp(params);
         emitRegAddr("sw", "$v0", NULL, WORD_SIZE * i, "$sp");
       }
-      fprintf(stderr, "\n");
+      cgenPush("$fp");                  /* control link */
+      emitRegReg("move", "$fp", "$sp"); /* new frame pointer */
       emitReg("jal", getName(node));
       /* pop arguments from stack */
       emitRegRegImm("addu", "$sp", "$sp", WORD_SIZE * (node->symbol->size));
@@ -287,11 +290,11 @@ static void cgenAssign(TreeNode *node)
     else
     {
       cgenArrayAddress(LHS); /* Array address in $v0  */
-      emitRegReg("move", "$t1", "$v0");
+      emitRegReg("move", "$t0", "$v0");
 
       cgenExp(LHS->child[0]); /* index in $v0 */
       emitRegRegImm("mul", "$v0", "$v0", WORD_SIZE);
-      emitRegRegReg("addu", "$v0", "$t1", "$v0");
+      emitRegRegReg("addu", "$v0", "$t0", "$v0");
     }
   }
   cgenPush("$v0"); /* Save LHS address to stack*/
@@ -411,12 +414,9 @@ static void cgenFunDecl(TreeNode *node)
   else
   { /* only for non-main */
     returnLabel = getLabel();
-    emitSymbolDecl(getName(node));
+    emitLabelStr(getName(node));
     emitComment("entry routine");
     cgenPush("$ra"); /* save return address */
-    cgenPush("$fp"); /* save frame pointer */
-    /* set frame pointer of new function */
-    emitRegRegImm("addu", "$fp", "$sp", 2 * WORD_SIZE);
   }
   /* reserve space for local variables */
   emitRegRegImm("subu", "$sp", "$sp", -node->symbol->memloc - WORD_SIZE);
@@ -425,11 +425,11 @@ static void cgenFunDecl(TreeNode *node)
   { /* only for non-main */
     emitComment("exit routine");
     if (node->type == Integer)
-      emitLabelDecl(returnLabel);
+      emitLabelNum(returnLabel);
 
-    emitRegRegImm("subu", "$sp", "$fp", 2 * WORD_SIZE);
-    cgenPop("$fp"); /* restore frame pointer */
+    emitRegRegImm("subu", "$sp", "$fp", 4);
     cgenPop("$ra"); /* restore return address */
+    cgenPop("$fp"); /* restore frame pointer */
     emitReg("jr", "$ra");
     sprintf(buff, "<-function \'%s\'", getName(node));
     emitComment(buff);
