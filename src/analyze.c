@@ -5,15 +5,16 @@
 /* Compiler Construction: Principles and Practice   */
 /* Kenneth C. Louden, 1997                          */
 /* Modified by Eom Taegyung                         */
-/****************************************************/ 
+/****************************************************/
 
 #include "globals.h"
-#include "symtab.h" 
+#include "symtab.h"
 #include "analyze.h"
 
 /* Returns the minimum of two arguments */
-static int min(int a, int b) {
-  return a<b?a:b;
+static int min(int a, int b)
+{
+  return a < b ? a : b;
 }
 
 static void typeError(TreeNode *t, const char *message)
@@ -30,7 +31,7 @@ static void argumentError(TreeNode *t, const char *function_name, const char *me
 
 static void semanticError(TreeNode *t, const char *message)
 {
-  if(t)
+  if (t)
     fprintf(listing, "Semantic error at line %d: %s\n", t->lineno, message);
   else
     fprintf(listing, "Semantic error: %s\n", message);
@@ -39,57 +40,57 @@ static void semanticError(TreeNode *t, const char *message)
 
 static int flag_functionDeclared = FALSE;
 static int flag_callArguments = 0;
-static TreeNode* node_currentFunction = NULL;
+static TreeNode *node_currentFunction = NULL;
 /* Procedure insertNode inserts 
  * identifiers stored in t into 
  * the symbol table 
  */
 static void insertNode(TreeNode *t)
 {
-  while(t)
+  while (t)
   {
     switch (t->nodekind)
     {
     case StmtK:
-      switch(t->kind.stmt)
+      switch (t->kind.stmt)
       {
-        case CompoundK:
+      case CompoundK:
+      {
+        int scope_incremented = FALSE;
+        int function_scope = TRUE;
+        if (!flag_functionDeclared)
         {
-          int scope_incremented = FALSE;
-          int function_scope = TRUE;
-          if(!flag_functionDeclared)
-          {
-            incrementScope();
-            scope_incremented = TRUE;
-            function_scope = FALSE;
-          }
-          flag_functionDeclared = FALSE;
-          insertNode(t->child[0]);
-          insertNode(t->child[1]);
-          if(TraceAnalyze)
-          {
-            if(function_scope)
-              fprintf(listing, "\n** Symbol table for scope of function %s declared at at line %d\n", node_currentFunction->attr.name, node_currentFunction->lineno);
-            else
-              fprintf(listing, "\n** Symbol table for nested scope in function %s closed at line %d\n", node_currentFunction->attr.name, t->lineno);
-            printSymTab(listing);
-          }
-          if(scope_incremented)
-            decrementScope();
-          break;
+          incrementScope();
+          scope_incremented = TRUE;
+          function_scope = FALSE;
         }
-        case SelectionK:
-          insertNode(t->child[0]);
-          insertNode(t->child[1]);
-          insertNode(t->child[2]);
-          break;
-        case IterationK:
-          insertNode(t->child[0]);
-          insertNode(t->child[1]);
-          break;
-        case ReturnK:
-          insertNode(t->child[0]);
-          break;
+        flag_functionDeclared = FALSE;
+        insertNode(t->child[0]);
+        insertNode(t->child[1]);
+        if (TraceAnalyze)
+        {
+          if (function_scope)
+            fprintf(listing, "\n** Symbol table for scope of function %s declared at at line %d\n", node_currentFunction->attr.name, node_currentFunction->lineno);
+          else
+            fprintf(listing, "\n** Symbol table for nested scope in function %s closed at line %d\n", node_currentFunction->attr.name, t->lineno);
+          printSymTab(listing);
+        }
+        if (scope_incremented)
+          decrementScope();
+        break;
+      }
+      case SelectionK:
+        insertNode(t->child[0]);
+        insertNode(t->child[1]);
+        insertNode(t->child[2]);
+        break;
+      case IterationK:
+        insertNode(t->child[0]);
+        insertNode(t->child[1]);
+        break;
+      case ReturnK:
+        insertNode(t->child[0]);
+        break;
       }
       break;
     case ExpK:
@@ -121,31 +122,31 @@ static void insertNode(TreeNode *t)
       }
       break;
     case DeclK:
-      switch(t->kind.decl)
+      switch (t->kind.decl)
       {
       case VarDeclK:
-        registerSymbol(t, isGlobalScope()?Global:Local, FALSE, t->child[0]->type);
+        registerSymbol(t, isGlobalScope() ? Global : Local, FALSE, t->child[0]->type);
         insertNode(t->child[0]);
-        if(node_currentFunction)
-            node_currentFunction->symbol->memloc = min(node_currentFunction->symbol->memloc, t->symbol->memloc);
+        if (node_currentFunction)
+          node_currentFunction->symbol->memloc = min(node_currentFunction->symbol->memloc, t->symbol->memloc);
         break;
       case ArrDeclK:
-        registerSymbol(t, isGlobalScope()?Global:Local, TRUE, t->child[0]->type);
+        registerSymbol(t, isGlobalScope() ? Global : Local, TRUE, t->child[0]->type);
         insertNode(t->child[0]);
         insertNode(t->child[1]);
-        if(node_currentFunction)
-            node_currentFunction->symbol->memloc = min(node_currentFunction->symbol->memloc, t->symbol->memloc);
+        if (node_currentFunction)
+          node_currentFunction->symbol->memloc = min(node_currentFunction->symbol->memloc, t->symbol->memloc);
         break;
       case FunDeclK:
         node_currentFunction = t;
         registerSymbol(t, Function, FALSE, t->child[0]->type);
         incrementScope();
         insertNode(t->child[0]);
-        setCurrentScopeMemoryLocation(0);   /* memory offset for paramters starts before control link */
-        insertNode(t->child[1]);            /* This child takes care of parameter declarations */
-        setCurrentScopeMemoryLocation(-4);  /* memory offset for local symbols start after return address */
+        setCurrentScopeMemoryLocation(4);  /* memory offset for paramters starts before control link */
+        insertNode(t->child[1]);           /* This child takes care of parameter declarations */
+        setCurrentScopeMemoryLocation(-4); /* memory offset for local symbols start after return address */
         flag_functionDeclared = TRUE;
-        insertNode(t->child[2]);            /* This child takes care of function body */
+        insertNode(t->child[2]); /* This child takes care of function body */
         t->symbol->memloc -= 4;
         decrementScope();
         node_currentFunction = NULL;
@@ -204,91 +205,99 @@ static void checkArguments(TreeNode *function, TreeNode *call)
   char buff[256];
 
   /* If VoidParamK, args MUST be NULL */
-  if(params && params->kind.param == VoidParamK)
+  if (params && params->kind.param == VoidParamK)
   {
-    if(args)
+    if (args)
       argumentError(args, function->attr.name, "This function does not take arguments.");
     return;
   }
 
-  if(params) ++counter_params;
-  if(args) ++counter_args;
-  while(params && args)
+  if (params)
+    ++counter_params;
+  if (args)
+    ++counter_args;
+  while (params && args)
   {
     /* VoidParamK: NEVER OK */
     /* VarParamK: AssignK, OpK, ConstK, ArrK이면 OK
                   VarK이면 lookup해서 !is_array이어야 OK
                   CallK이면 lookup해서 type==Integer이어야 OK*/
     /* ArrParamK: VarK이면서 lookup해서 is_array이어야 OK */
-    switch(params->kind.param)
+    switch (params->kind.param)
     {
-      case VoidParamK:
-        argumentError(args, function->attr.name, "This function does not take arguments.");
+    case VoidParamK:
+      argumentError(args, function->attr.name, "This function does not take arguments.");
+      return;
+    case VarParamK:
+      if (args->kind.exp == VarK)
+      {
+        if (args->symbol->is_array)
+        {
+          sprintf(buff, "Expected integer for argument %d, but received array.", counter_args);
+          argumentError(args, function->attr.name, buff);
+          return;
+        }
+      }
+      else if (args->kind.exp == CallK)
+      {
+        if (args->type != Integer)
+        {
+          sprintf(buff, "Expected integer for argument %d, but received void function call.", counter_args);
+          argumentError(args, function->attr.name, buff);
+          return;
+        }
+      }
+      break;
+    case ArrParamK:
+      if (args->kind.exp != VarK)
+      {
+        sprintf(buff, "Expected array for argument %d, but received something else.", counter_args);
+        argumentError(args, function->attr.name, buff);
         return;
-      case VarParamK:
-          if(args->kind.exp == VarK)
-          {
-            if(args->symbol->is_array)
-            {
-              sprintf(buff, "Expected integer for argument %d, but received array.", counter_args);
-              argumentError(args, function->attr.name, buff);
-              return;
-            }
-          }
-          else if(args->kind.exp == CallK)
-          {
-            if(args->type != Integer)
-            {
-              sprintf(buff, "Expected integer for argument %d, but received void function call.", counter_args);
-              argumentError(args, function->attr.name, buff);
-              return;
-            }
-          }
-        break;
-        case ArrParamK:
-          if(args->kind.exp != VarK)
-          {
-            sprintf(buff, "Expected array for argument %d, but received something else.", counter_args);
-            argumentError(args, function->attr.name, buff);
-            return;
-          }
-          else
-          {
-            if(!args->symbol->is_array)
-            {
-              sprintf(buff, "Expected array for argument %d, but received variable.", counter_args);
-              argumentError(args, function->attr.name, buff);
-              return;
-            }
-          }
-        break;
+      }
+      else
+      {
+        if (!args->symbol->is_array)
+        {
+          sprintf(buff, "Expected array for argument %d, but received variable.", counter_args);
+          argumentError(args, function->attr.name, buff);
+          return;
+        }
+      }
+      break;
     }
 
     /* Move to next parameter & argument */
     params = params->sibling;
     args = args->sibling;
-    if(params) ++counter_params;
-    if(args) ++counter_args;
+    if (params)
+      ++counter_params;
+    if (args)
+      ++counter_args;
   }
-  if(!params && args) /* Too many arguments */
+  if (!params && args) /* Too many arguments */
   {
-    while(1)
+    while (1)
     {
       args = args->sibling;
-      if(args) ++counter_args;
-      else break;
+      if (args)
+        ++counter_args;
+      else
+        break;
     }
     sprintf(buff, "Too many arguments. %d expected, %d given.", counter_params, counter_args);
     argumentError(call, call->attr.name, buff);
     return;
   }
-  if(params && !args) /* Too few arguments */
+  if (params && !args) /* Too few arguments */
   {
-    while(1)
+    while (1)
     {
       params = params->sibling;
-      if(params) ++counter_params;
-      else break;
+      if (params)
+        ++counter_params;
+      else
+        break;
     }
     sprintf(buff, "Too few arguments. %d expected, %d given.", counter_params, counter_args);
     argumentError(call, call->attr.name, buff);
@@ -301,7 +310,7 @@ static void checkArguments(TreeNode *function, TreeNode *call)
  */
 void typeCheck(TreeNode *t)
 {
-  while(t)
+  while (t)
   {
     switch (t->nodekind)
     {
@@ -356,8 +365,9 @@ void typeCheck(TreeNode *t)
         break;
       case VarK:
         if (t->symbol->symbol_class == Function)
-            typeError(t, "used a function like a variable");
-        else if (!flag_callArguments) {
+          typeError(t, "used a function like a variable");
+        else if (!flag_callArguments)
+        {
           if (t->symbol->is_array)
             typeError(t, "used an array like a variable");
         }
@@ -365,7 +375,7 @@ void typeCheck(TreeNode *t)
         break;
       case ArrK:
         typeCheck(t->child[0]);
-        if(!t->symbol->is_array)
+        if (!t->symbol->is_array)
           typeError(t, "used a non-array like a array");
         if ((t->child[0]->type != Integer))
           typeError(t, "Array index in not integer");
@@ -375,11 +385,12 @@ void typeCheck(TreeNode *t)
         ++flag_callArguments;
         typeCheck(t->child[0]);
         --flag_callArguments;
-        if(t->symbol->symbol_class != Function) {
+        if (t->symbol->symbol_class != Function)
+        {
           typeError(t, "used a non-function like a function");
           break;
         }
-        
+
         /* Check number and type of arguments for function call */
         checkArguments(t->symbol->treeNode, t);
         t->type = t->symbol->treeNode->type;
@@ -387,7 +398,7 @@ void typeCheck(TreeNode *t)
       }
       break;
     case DeclK:
-      switch(t->kind.decl)
+      switch (t->kind.decl)
       {
       case VarDeclK:
         typeCheck(t->child[0]);
@@ -437,16 +448,19 @@ void typeCheck(TreeNode *t)
 /* Function mainCheck finds the main function
  * and asserts it is sematically sound.
  */
-TreeNode* mainCheck(TreeNode * node) {
-  while(node) {
-    if(!strcmp(node->attr.name, "main")) {
-      if(node->nodekind != DeclK || node->kind.decl != FunDeclK)
+TreeNode *mainCheck(TreeNode *node)
+{
+  while (node)
+  {
+    if (!strcmp(node->attr.name, "main"))
+    {
+      if (node->nodekind != DeclK || node->kind.decl != FunDeclK)
         semanticError(node, "\'main\' should be a function.");
-      else if(node->type != Void)
+      else if (node->type != Void)
         semanticError(node, "Return type of function \'main\' must be void.");
-      else if(node->child[1]->kind.param != VoidParamK)
+      else if (node->child[1]->kind.param != VoidParamK)
         semanticError(node, "Parameter of function \'main\' must be void.");
-      else if(node->sibling)
+      else if (node->sibling)
         semanticError(node, "Illegal global definition after function \'main\'.");
       return node;
     }
