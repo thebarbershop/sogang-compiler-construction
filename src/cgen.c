@@ -483,14 +483,18 @@ static void cgenGlobal(TreeNode *node)
   {
     if (node->nodekind == DeclK)
     {
-      if (strlen(node->symbol->treeNode->attr.name) == 1)
+      /* Add underbar in front of global symbols.
+       * This is to keep symbols from colliding with MIPS operators */
+      if (strcmp(node->symbol->treeNode->attr.name, "main") != 0)
       {
-        char *buff = malloc(3);
-        addPtr(buff);
+        int length = strlen(node->symbol->treeNode->attr.name);
+        char *buff = malloc(length + 2);
         buff[0] = '_';
-        buff[1] = node->symbol->treeNode->attr.name[0];
-        buff[2] = '\0';
+        for (int i = 0; i < length; ++i)
+          buff[i + 1] = node->symbol->treeNode->attr.name[i];
+        buff[length + 1] = '\0';
         node->symbol->treeNode->attr.name = buff;
+        addPtr(buff);
       }
       switch (node->kind.decl)
       {
