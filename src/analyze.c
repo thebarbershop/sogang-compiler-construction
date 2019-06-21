@@ -312,6 +312,9 @@ static void checkArguments(TreeNode *function, TreeNode *call)
   }
 }
 
+/* this flag records if an int function has a return statement */
+static int flag_functionReturned = FALSE;
+
 /* Procedure typeCheck performs type checking 
  * by a postorder syntax tree traversal
  */
@@ -347,6 +350,7 @@ void typeCheck(TreeNode *t)
         typeCheck(t->child[0]);
         if (t->child[0]->type != node_currentFunction->type)
           typeError(t->child[0], "Return value does not match function type");
+        flag_functionReturned = TRUE;
         break;
       }
       break;
@@ -420,12 +424,14 @@ void typeCheck(TreeNode *t)
         break;
       case FunDeclK:
         node_currentFunction = t;
+        flag_functionReturned = FALSE;
         typeCheck(t->child[0]);
         t->type = t->child[0]->type;
         typeCheck(t->child[1]);
         typeCheck(t->child[2]);
+        if (!flag_functionReturned && t->type == Integer)
+          semanticError(t, "An integer function does not have a return statement");
         node_currentFunction = NULL;
-
         break;
       }
     case TypeK:
