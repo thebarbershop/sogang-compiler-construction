@@ -32,4 +32,4 @@ This project is based on codes for a TINY Language compiler, whose source code i
 
 [1]: Louden, Kenneth C., Compiler Construction: Principles and Practice, PWS Publishing Company, 1997.
 
-[2]: For the SPIM project, see http://spimsimulator.sourceforge.net/; The official site does not offer download links for SPIM 8.0, but you can run `sudo apt-get install spim` in Debian/Ubuntu.
+[2]: For the SPIM project, see [the official site](http://spimsimulator.sourceforge.net/); The site does not offer download links for SPIM 8.0, but you can run `sudo apt-get install spim` in Debian/Ubuntu. I recommend using the latest QtSpim distribution from the official site. It runs the apparently same MIPS assembly language with better UI and debugging tools.
