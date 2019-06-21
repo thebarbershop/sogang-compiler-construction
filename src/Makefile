@@ -1,30 +1,31 @@
 CC = gcc
-
+LEX = flex
+YACC = bison
 
 CFLAGS=-std=c11 -Wall -Werror -O3 -Wpedantic
 
 .SUFFIXES: .c .o
 
 BINARY=project3_17
-FLEXRAW=cm.l
-FLEXC=lex.yy.c
-BISONRAW=cm.y
-BISONC=y.tab.c
-BISONH=y.tab.h
-BISONOUTPUT=y.output
+LEXRAW=cm.l
+LEXC=lex.yy.c
+YACCRAW=cm.y
+YACCC=y.tab.c
+YACCH=y.tab.h
+YACCOUTPUT=y.output
 
-SRCS=main.c util.c symtab.c analyze.c parse.c code.c cgen.c $(FLEXC) $(BISONC)
+SRCS=main.c util.c symtab.c analyze.c parse.c code.c cgen.c $(LEXC) $(YACCC)
 OBJS=$(SRCS:.c=.o)
 
-$(BINARY): $(FLEXC) $(BISONC) $(OBJS)
+$(BINARY): $(LEXC) $(YACCC) $(OBJS)
 	$(CC) -o $@ $(OBJS)
 
-lex.yy.c: $(FLEXRAW)
-	flex -o $(FLEXC) $(FLEXRAW)
+$(LEXC): $(LEXRAW)
+	$(LEX) -o $(LEXC) $(LEXRAW)
 
-y.tab.c: $(BISONRAW)
-	bison -o $(BISONC) -d $(BISONRAW) --report=all --report-file=$(BISONOUTPUT)
+$(YACCC): $(YACCRAW)
+	$(YACC) -o $(YACCC) -d $(YACCRAW) --report=all --report-file=$(YACCOUTPUT)
 
 .PHONY: clean
 clean:
-	rm -f $(OBJS) $(BINARY) $(FLEXC) $(BISONC) $(BISONH) $(BISONOUTPUT)
+	rm -f $(OBJS) $(BINARY) $(LEXC) $(YACCC) $(YACCH) $(YACCOUTPUT)
