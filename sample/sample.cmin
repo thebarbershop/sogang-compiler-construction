@@ -1,8 +1,9 @@
-int a(void) {
-
+int a(void)
+{
 }
 
-void main(void) {
+void main(void)
+{
 }
 
 int b;
