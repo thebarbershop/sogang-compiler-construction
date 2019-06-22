@@ -6,7 +6,7 @@ CFLAGS=-std=c11 -Wall -Werror -O3 -Wpedantic
 
 .SUFFIXES: .c .o
 
-BINARY=project3_17
+BINARY=project4_17
 LEXRAW=cm.l
 LEXC=lex.yy.c
 YACCRAW=cm.y
