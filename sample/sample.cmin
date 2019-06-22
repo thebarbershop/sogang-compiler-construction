@@ -1,9 +1,0 @@
-int a(void)
-{
-}
-
-void main(void)
-{
-}
-
-int b;
