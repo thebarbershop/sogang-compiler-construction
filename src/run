@@ -1,4 +1,4 @@
 #!/bin/bash
 
-./project3_17 ../sample/$1.cmin &&
+./project4_17 ../sample/$1.cmin &&
 spim -file ../sample/$1.s
