@@ -315,9 +315,9 @@ int getBaseIndex(const char *fullPath)
       break;
     if (fullPath[i] == '/')
     {
-      i = -1;
+      i = len;
       break;
     }
   }
-  return (i == -1) ? len : i;
+  return i;
 }
