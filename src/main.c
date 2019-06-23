@@ -126,9 +126,9 @@ int main(int argc, char *argv[])
   {
     char *codefile;
     int fnlen = getBaseIndex(pgm);
-    codefile = malloc(fnlen + 4);
+    codefile = malloc(fnlen + 5);
     strncpy(codefile, pgm, fnlen);
-    strcat(codefile, ".s");
+    strcat(codefile, ".tm");
     code = fopen(codefile, "w");
     if (code == NULL)
     {
